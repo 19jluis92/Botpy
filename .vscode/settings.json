@@ -1,0 +1,19 @@
+{
+  // Para que el análisis de Python (IntelliSense / Pylance) reconozca tu carpeta src
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/src"
+  ],
+
+  // Para que los terminales integrados tengan PYTHONPATH con src
+  "terminal.integrated.env.windows": {
+    "PYTHONPATH": "${workspaceFolder}/src;${env:PYTHONPATH}"
+  },
+  "terminal.integrated.env.linux": {
+    "PYTHONPATH": "${workspaceFolder}/src:${env:PYTHONPATH}"
+  },
+  "terminal.integrated.env.osx": {
+    "PYTHONPATH": "${workspaceFolder}/src:${env:PYTHONPATH}"
+},
+"python-envs.defaultEnvManager": "ms-python.python:pyenv",
+"python-envs.pythonProjects": []
+}
