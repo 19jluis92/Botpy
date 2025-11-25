@@ -94,7 +94,6 @@ async def docker_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return START_ROUTES
 
 
-# ESTA ES LA FUNCIÓN QUE ESTABA MAL
 async def roku_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
