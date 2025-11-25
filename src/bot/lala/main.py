@@ -9,7 +9,9 @@ from telegram.ext import (
     CallbackQueryHandler,
     ContextTypes,
     ApplicationBuilder,
-    CommandHandler
+    CommandHandler,
+    MessageHandler, 
+    filters
 )
 from dotenv import load_dotenv
 # Load .env file
@@ -189,6 +191,76 @@ async def end(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 
+# ========================
+#       ACCIONES ROKU
+# ========================
+
+async def roku_define_ip(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    await query.edit_message_text("📺 Envíame la IP de tu Roku TV:")
+    context.user_data["awaiting_ip"] = True
+
+    return ACTIONS_ROUTES
+
+
+async def set_roku_ip(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if context.user_data.get("awaiting_ip", False):
+        ip = update.message.text
+        roku.set_ip(ip)
+
+        await update.message.reply_text(f"✅ IP configurada: {ip}")
+
+        context.user_data["awaiting_ip"] = False
+
+        # regresar al menú principal
+        await update.message.reply_text(
+            main_menu_message(),
+            reply_markup=main_menu_keyboard()
+        )
+
+        return START_ROUTES
+
+    return ACTIONS_ROUTES
+
+
+async def roku_power_on(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    await roku.power_on()
+    await query.edit_message_text("🔌 TV Roku ENCENDIDA")
+    return START_ROUTES
+
+
+async def roku_power_off(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    await roku.power_off()
+    await query.edit_message_text("🔌 TV Roku APAGADA")
+    return START_ROUTES
+
+
+async def roku_volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    await roku.volume_up()   # o volume_down()
+    await query.edit_message_text("🔊 Volumen ajustado")
+    return START_ROUTES
+
+
+async def roku_open_app(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    await roku.launch_app("YouTube")  # o cualquier app de tu clase
+    await query.edit_message_text("📺 Abriendo YouTube...")
+    return START_ROUTES
+
+
 #########################################
 #             MAIN
 #########################################
@@ -204,6 +276,11 @@ if __name__ == "__main__":
                 CallbackQueryHandler(ngrok_menu, pattern=f"^{NGROK}$"),
                 CallbackQueryHandler(docker_menu, pattern=f"^{DOCKER}$"),
                 CallbackQueryHandler(roku_menu, pattern=f"^{ROKU}$"),
+                CallbackQueryHandler(roku_define_ip, pattern="^m4_1$"),
+                CallbackQueryHandler(roku_power_on,  pattern="^m4_2$"),
+                CallbackQueryHandler(roku_power_off, pattern="^m4_3$"),
+                CallbackQueryHandler(roku_volume,    pattern="^m4_4$"),
+                CallbackQueryHandler(roku_open_app,  pattern="^m4_5$"),
                 CallbackQueryHandler(exit_menu, pattern=f"^{END}$"),
             ],
             END_ROUTES: [
@@ -211,7 +288,10 @@ if __name__ == "__main__":
                 CallbackQueryHandler(end, pattern=f"^{END}$"),
             ]
         },
-        fallbacks=[CommandHandler("start", start)]
+        fallbacks=[
+        CommandHandler("start", start),
+        MessageHandler(filters.TEXT & ~filters.COMMAND, set_roku_ip)
+        ]
     )
 
     application.add_handler(conv_handler)
