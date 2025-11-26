@@ -21,22 +21,26 @@ class RokuController:
     async def power_on(self):
         await self.connect()
         # Encendido = enviar "Home" porque PowerOn no existe
-        await self.roku.control.keypress("Home")
+        await self.roku.remote("poweron")
 
     async def power_off(self):
         await self.connect()
-        await self.roku.control.keypress("PowerOff")
+        await self.roku.remote("poweroff")
 
     async def volume_up(self, steps=1):
         await self.connect()
         for _ in range(steps):
-            await self.roku.control.keypress("VolumeUp")
+            await self.roku.remote("volume_up")
 
     async def volume_down(self, steps=1):
         await self.connect()
         for _ in range(steps):
-            await self.roku.control.keypress("VolumeDown")
+            await self.roku.remote("volume_down")
 
     async def launch_app(self, app_id: str):
         await self.connect()
-        await self.roku.control.launch(app_id)
+        await self.roku.launch(app_id)
+
+    async def get_apps(self):
+        await self.connect()
+        return await self.roku._get_apps()

@@ -145,6 +145,7 @@ def roku_menu_keyboard():
         [InlineKeyboardButton('Apagar', callback_data='m4_3')],
         [InlineKeyboardButton('Volumen', callback_data='m4_4')],
         [InlineKeyboardButton('Aplicación', callback_data='m4_5')],
+        [InlineKeyboardButton('Mostrar Aplicaciones', callback_data='m4_6')],
         [InlineKeyboardButton('Main menu', callback_data=str(START))]
     ])
 
@@ -256,8 +257,17 @@ async def roku_open_app(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    await roku.launch_app("YouTube")  # o cualquier app de tu clase
+    await roku.launch_app("41468")  # o cualquier app de tu clase
+    await query.edit_message_text("📺 Abriendo ...")
+    return START_ROUTES
+
+async def roku_get_apps(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    apps = await roku.get_apps()
     await query.edit_message_text("📺 Abriendo YouTube...")
+    await query.edit_message_text(apps)
     return START_ROUTES
 
 
@@ -281,6 +291,7 @@ if __name__ == "__main__":
                 CallbackQueryHandler(roku_power_off, pattern="^m4_3$"),
                 CallbackQueryHandler(roku_volume,    pattern="^m4_4$"),
                 CallbackQueryHandler(roku_open_app,  pattern="^m4_5$"),
+                CallbackQueryHandler(roku_get_apps,  pattern="^m4_6$"),
                 CallbackQueryHandler(exit_menu, pattern=f"^{END}$"),
             ],
             END_ROUTES: [
