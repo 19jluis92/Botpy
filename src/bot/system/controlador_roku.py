@@ -44,3 +44,7 @@ class RokuController:
     async def get_apps(self):
         await self.connect()
         return await self.roku._get_apps()
+    
+    async def get_device_info(self):
+        await self.connect()
+        return await self.roku._get_device_info()
