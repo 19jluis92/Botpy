@@ -17,6 +17,7 @@ from telegram.ext import (
 from bot.utils.auth import restricted
 from dotenv import load_dotenv
 import sys, os
+from jproperties import Properties
 load_dotenv()
 from bot.system.controlador_roku import RokuController
 from bot.system.controlador_melate import MelateController
@@ -89,7 +90,7 @@ async def melate_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     await query.edit_message_text(melate_menu_message(), reply_markup=melate_menu_keyboard())
-    return START_ROUTES
+    return MELATE_ROUTES
 
 
 async def roku_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -433,6 +434,7 @@ if __name__ == "__main__":
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
                 CallbackQueryHandler(ngrok_menu, pattern=f"^{NGROK}$"),
                 CallbackQueryHandler(docker_menu, pattern=f"^{DOCKER}$"),
+                CallbackQueryHandler(melate_menu, pattern=f"^{MELATE}$"),
                 CallbackQueryHandler(roku_menu, pattern=f"^{ROKU}$"),
                 CallbackQueryHandler(exit_menu, pattern=f"^{END}$"),
                 CommandHandler("roku", roku_menu),

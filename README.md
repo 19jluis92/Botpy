@@ -45,6 +45,9 @@ Dependencias:
 pip install python-telegram-bot==20.7
 pip install python-dotenv
 pip install rokuecp
+pip install sklearn 
+pip install pandas
+pip install jproperties
 ```
 
 ## Archivo `.env`
