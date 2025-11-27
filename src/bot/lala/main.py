@@ -1,4 +1,5 @@
 import logging
+import json
 from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
@@ -13,24 +14,18 @@ from telegram.ext import (
     MessageHandler,
     filters
 )
+from bot.utils.auth import restricted
 from dotenv import load_dotenv
 import sys, os
-
 load_dotenv()
-
-# Debug: rutas python
-print("\n>> RUTAS DE PYTHON (sys.path):")
-for p in sys.path:
-    print("   ", p)
-
 from bot.system.controlador_roku import RokuController
-
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
+
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
@@ -47,7 +42,7 @@ roku = RokuController()
 #######################################################
 #                     START
 #######################################################
-
+@restricted
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     logger.info("User %s started the conversation.", user.first_name)
@@ -330,7 +325,10 @@ async def roku_get_apps(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         apps = await roku.get_apps()
-        pretty = "\n".join([f"- {a.name} (ID: {a.id})" for a in apps])
+        pretty = "\n".join([
+            f"- {a.get('#text', 'Sin nombre')} (ID: {a.get('@id', 'N/A')})"
+            for a in apps
+        ])
         msg = f"📦 **Aplicaciones instaladas:**\n\n{pretty}"
     except Exception as e:
         msg = f"❌ Error al obtener aplicaciones:\n{e}"
@@ -351,7 +349,10 @@ async def roku_get_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         info = await roku.get_device_info()
-        msg = f"📺 **Información del dispositivo:**\n\n{info}"
+        keys = ["friendly-model-name", "model-name", "power-mode"]
+        filtered = {k: info[k] for k in keys if k in info}
+        pretty = json.dumps(filtered, indent=4)
+        msg = f"📺 **Información del dispositivo:**\n\n{pretty}"
     except Exception as e:
         msg = f"❌ Error al obtener información:\n{e}"
 
