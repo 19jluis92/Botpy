@@ -48,6 +48,7 @@ pip install rokuecp
 pip install sklearn 
 pip install pandas
 pip install jproperties
+pip install requests
 ```
 
 ## Archivo `.env`

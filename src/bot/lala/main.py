@@ -21,6 +21,8 @@ from jproperties import Properties
 load_dotenv()
 from bot.system.controlador_roku import RokuController
 from bot.system.controlador_melate import MelateController
+from bot.system.controlador_ngrok import NgrokController
+
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -42,6 +44,10 @@ roku = RokuController()
 
 # Controlador Melate
 melate = MelateController()
+
+# Controlador Ngrok
+ngrok = NgrokController()
+
 
 
 #######################################################
@@ -75,7 +81,7 @@ async def ngrok_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     await query.edit_message_text(ngrok_menu_message(), reply_markup=ngrok_menu_keyboard())
-    return START_ROUTES
+    return NGROK_ROUTES
 
 
 async def docker_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -83,7 +89,7 @@ async def docker_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     await query.edit_message_text(docker_menu_message(), reply_markup=docker_menu_keyboard())
-    return START_ROUTES
+    return DOCKER_ROUTES
 
 async def melate_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -418,6 +424,46 @@ async def melate_get_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.message.reply_text("Numero recomendado:", reply_markup=melate_menu_keyboard())
     return MELATE_ROUTES
 
+# ========================
+#   NGROK — LISTAR URLS ACTIVAS
+# ========================
+
+async def ngrok_active_urls(update, context):
+    query = update.callback_query
+    await query.answer()
+
+    try:
+        urls = ngrok.get_public_urls()
+        if not urls:
+            msg = "❌ No hay túneles activos."
+        else:
+            msg = "🌐 **Ngrok URLs activas:**\n\n" + "\n".join(f"- {u}" for u in urls)
+
+    except Exception as e:
+        msg = f"⚠️ Error obteniendo URLs:\n{e}"
+
+    await query.edit_message_text(msg, parse_mode="Markdown")
+    return NGROK_ROUTES
+
+# ========================
+#   NGROK — STATUS
+# ========================
+
+async def ngrok_status(update, context):
+    query = update.callback_query
+    await query.answer()
+
+    try:
+        status = ngrok.list_tunnels()
+        msg = f"📊 **Ngrok Status:**\n```\n{status}\n```"
+    except Exception as e:
+        msg = f"⚠️ Error obteniendo status:\n{e}"
+
+    await query.edit_message_text(msg, parse_mode="Markdown")
+    return NGROK_ROUTES
+
+
+
 
 #######################################################
 #                     MAIN
@@ -440,7 +486,8 @@ if __name__ == "__main__":
                 CommandHandler("roku", roku_menu),
             ],
             NGROK_ROUTES: [
-                #CallbackQueryHandler(roku_define_ip, pattern="^m4_1$"),
+                CallbackQueryHandler(ngrok_active_urls, pattern="^m1_1$"),
+                CallbackQueryHandler(ngrok_status, pattern="^m1_2$"),
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
             ],
             DOCKER_ROUTES: [
