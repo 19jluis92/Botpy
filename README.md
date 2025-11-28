@@ -49,6 +49,7 @@ pip install sklearn
 pip install pandas
 pip install jproperties
 pip install requests
+pip install docker
 ```
 
 ## Archivo `.env`
