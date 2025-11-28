@@ -14,6 +14,36 @@ from telegram.ext import (
     MessageHandler,
     filters
 )
+from bot.handlers.roku_handlers import (
+    roku_menu,
+    roku_menu_keyboard,
+    roku_define_ip,
+    roku_power_on,
+    roku_power_off,
+    roku_volume,
+    roku_open_app,
+    set_roku_app_id,
+    roku_get_apps,
+    roku_get_status,
+    set_roku_ip,
+    roku_text_router
+)
+from bot.handlers.ngrok_handlers import (
+    ngrok_active_urls,
+    ngrok_status,
+    ngrok_menu_keyboard,
+    ngrok_menu,
+)
+from bot.handlers.melate_handler import (
+    melate_get_number,
+    melate_menu_keyboard,
+    melate_menu
+)
+from bot.handlers.docker_handler import (
+    docker_menu,
+    docker_menu_keyboard,
+    docker_menu_message
+)
 from bot.utils.auth import restricted
 from dotenv import load_dotenv
 import sys, os
@@ -39,16 +69,6 @@ START_ROUTES,NGROK_ROUTES, MELATE_ROUTES, DOCKER_ROUTES, ROKU_ROUTES, END_ROUTES
 # callback_data
 START, NGROK, DOCKER, MELATE, ROKU, END = range(6)
 
-# Controlador Roku
-roku = RokuController()
-
-# Controlador Melate
-melate = MelateController()
-
-# Controlador Ngrok
-ngrok = NgrokController()
-
-
 
 #######################################################
 #                     START
@@ -73,53 +93,6 @@ async def start_over(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 #######################################################
-#                     MENÚS
-#######################################################
-
-async def ngrok_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    await query.edit_message_text(ngrok_menu_message(), reply_markup=ngrok_menu_keyboard())
-    return NGROK_ROUTES
-
-
-async def docker_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    await query.edit_message_text(docker_menu_message(), reply_markup=docker_menu_keyboard())
-    return DOCKER_ROUTES
-
-async def melate_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    await query.edit_message_text(melate_menu_message(), reply_markup=melate_menu_keyboard())
-    return MELATE_ROUTES
-
-
-async def roku_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Si viene de botón
-    if update.callback_query:
-        query = update.callback_query
-        await query.answer()
-        message = query.message
-    else:
-        # Si viene del comando /roku
-        message = update.message
-
-    context.user_data["roku_state"] = None
-
-    await message.reply_text(
-        roku_menu_message(),
-        reply_markup=roku_menu_keyboard()
-    )
-
-    return ROKU_ROUTES
-
-
-#######################################################
 #                     KEYBOARDS
 #######################################################
 
@@ -133,59 +106,12 @@ def main_menu_keyboard():
     ])
 
 
-def ngrok_menu_keyboard():
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton('Active URLs', callback_data='m1_1')],
-        [InlineKeyboardButton('Status', callback_data='m1_2')],
-        [InlineKeyboardButton('Main menu', callback_data=str(START))]
-    ])
-
-
-def docker_menu_keyboard():
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton('List containers', callback_data='m2_1')],
-        [InlineKeyboardButton('Execute by Id', callback_data='m2_2')],
-        [InlineKeyboardButton('Main menu', callback_data=str(START))]
-    ])
-
-def melate_menu_keyboard():
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton('Dame el numero', callback_data='m3_1')],
-        [InlineKeyboardButton('Main menu', callback_data=str(START))]
-    ])
-
-
-def roku_menu_keyboard():
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton('Define IP', callback_data='m4_1')],
-        [InlineKeyboardButton('Encender', callback_data='m4_2')],
-        [InlineKeyboardButton('Apagar', callback_data='m4_3')],
-        [InlineKeyboardButton('Volumen', callback_data='m4_4')],
-        [InlineKeyboardButton('Aplicación', callback_data='m4_5')],
-        [InlineKeyboardButton('Mostrar Aplicaciones', callback_data='m4_6')],
-        [InlineKeyboardButton('Mostrar Información de TV', callback_data='m4_7')],
-        [InlineKeyboardButton('Main menu', callback_data=str(START))]
-    ])
-
-
 #######################################################
 #                     MESSAGES
 #######################################################
 
 def main_menu_message():
     return "Choose the option:"
-
-def ngrok_menu_message():
-    return "Choose the Ngrok action:"
-
-def docker_menu_message():
-    return "Choose Docker action:"
-
-def melate_menu_message():
-    return "Choose Melate action:"
-
-def roku_menu_message():
-    return "Choose Roku action:"
 
 
 #######################################################
@@ -211,257 +137,6 @@ async def end(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     await query.edit_message_text("See you soon!")
     return ConversationHandler.END
-
-
-# ========================
-#   ROKU — DEFINIR IP
-# ========================
-
-async def roku_define_ip(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """El usuario presiona 'Define IP' → pedir IP."""
-    query = update.callback_query
-    await query.answer()
-
-    await query.edit_message_text("📡 Envíame la IP de tu Roku TV:")
-    context.user_data["awaiting_ip"] = True
-
-    return ROKU_ROUTES
-
-
-async def set_roku_ip(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """El usuario escribe la IP → guardar, conectar y regresar al menú Roku."""
-    if not context.user_data.get("awaiting_ip", False):
-        return ROKU_ROUTES
-
-    ip = update.message.text.strip()
-    roku.set_ip(ip)
-    context.user_data["awaiting_ip"] = False
-
-    await update.message.reply_text(f"🔧 IP configurada: {ip}\nIntentando conectar...")
-
-    try:
-        await roku.connect()
-        await update.message.reply_text("✅ Conectado correctamente a Roku.")
-    except Exception as e:
-        await update.message.reply_text(f"❌ Error al conectar con Roku:\n{e}")
-
-    await update.message.reply_text("📺 Menú Roku:", reply_markup=roku_menu_keyboard())
-    return ROKU_ROUTES
-
-
-
-# ========================
-#   ROKU — ENCENDER
-# ========================
-
-async def roku_power_on(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    try:
-        await roku.power_on()
-        msg = "🔌 TV Roku **ENCENDIDA**"
-    except Exception as e:
-        msg = f"❌ Error al encender:\n{e}"
-
-    await query.edit_message_text(msg)
-    await query.message.reply_text("📺 Menú Roku:", reply_markup=roku_menu_keyboard())
-    return ROKU_ROUTES
-
-
-
-# ========================
-#   ROKU — APAGAR
-# ========================
-
-async def roku_power_off(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    try:
-        await roku.power_off()
-        msg = "🔌 TV Roku **APAGADA**"
-    except Exception as e:
-        msg = f"❌ Error al apagar:\n{e}"
-
-    await query.edit_message_text(msg)
-    await query.message.reply_text("📺 Menú Roku:", reply_markup=roku_menu_keyboard())
-    return ROKU_ROUTES
-
-
-
-# ========================
-#   ROKU — AJUSTAR VOLUMEN
-# ========================
-
-async def roku_volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    try:
-        await roku.volume_up()  # ajusta según quieras
-        msg = "🔊 Volumen ajustado"
-    except Exception as e:
-        msg = f"❌ Error con el volumen:\n{e}"
-
-    await query.edit_message_text(msg)
-    await query.message.reply_text("📺 Menú Roku:", reply_markup=roku_menu_keyboard())
-    return ROKU_ROUTES
-
-
-
-# ========================
-#   ROKU — ABRIR APLICACIÓN
-# ========================
-
-async def roku_open_app(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    await query.edit_message_text("📺 Envíame el *ID de la aplicación*:")
-    context.user_data["awaiting_appId"] = True
-    return ROKU_ROUTES
-
-
-async def set_roku_app_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not context.user_data.get("awaiting_appId", False):
-        return ROKU_ROUTES
-
-    app_id = update.message.text.strip()
-    context.user_data["awaiting_appId"] = False
-
-    try:
-        await roku.launch_app(app_id)
-        msg = f"📺 Aplicación lanzada: `{app_id}`"
-    except Exception as e:
-        msg = f"❌ No se pudo abrir la aplicación:\n{e}"
-
-    await update.message.reply_text(msg, parse_mode="Markdown")
-    await update.message.reply_text("📺 Menú Roku:", reply_markup=roku_menu_keyboard())
-    return ROKU_ROUTES
-
-
-
-# ========================
-#   ROKU — LISTAR APPS
-# ========================
-
-async def roku_get_apps(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    try:
-        apps = await roku.get_apps()
-        pretty = "\n".join([
-            f"- {a.get('#text', 'Sin nombre')} (ID: {a.get('@id', 'N/A')})"
-            for a in apps
-        ])
-        msg = f"📦 **Aplicaciones instaladas:**\n\n{pretty}"
-    except Exception as e:
-        msg = f"❌ Error al obtener aplicaciones:\n{e}"
-
-    await query.edit_message_text(msg, parse_mode="Markdown")
-    await query.message.reply_text("📺 Menú Roku:", reply_markup=roku_menu_keyboard())
-    return ROKU_ROUTES
-
-
-
-# ========================
-#   ROKU — STATUS DEL DISPOSITIVO
-# ========================
-
-async def roku_get_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    try:
-        info = await roku.get_device_info()
-        keys = ["friendly-model-name", "model-name", "power-mode"]
-        filtered = {k: info[k] for k in keys if k in info}
-        pretty = json.dumps(filtered, indent=4)
-        msg = f"📺 **Información del dispositivo:**\n\n{pretty}"
-    except Exception as e:
-        msg = f"❌ Error al obtener información:\n{e}"
-
-    await query.edit_message_text(msg, parse_mode="Markdown")
-    await query.message.reply_text("📺 Menú Roku:", reply_markup=roku_menu_keyboard())
-    return ROKU_ROUTES
-
-async def roku_text_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text.strip()
-
-    # Si estamos esperando IP
-    if context.user_data.get("awaiting_ip", False):
-        return await set_roku_ip(update, context)
-
-    # Si estamos esperando un AppID
-    if context.user_data.get("awaiting_appId", False):
-        return await set_roku_app_id(update, context)
-
-    # Si llega texto sin esperarlo → ignorar elegantemente
-    await update.message.reply_text(
-        "⚠️ No estoy esperando texto ahora.\n"
-        "Usa el menú Roku 👉",
-        reply_markup=roku_menu_keyboard()
-    )
-
-    return ROKU_ROUTES
-
-# ========================
-#   MELATE — DAME UN NUMERO
-# ========================
-
-async def melate_get_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    try:
-        msg = await melate.get_recommended_number()
-    except Exception as e:
-        msg = f"❌ Error al obtener el numero:\n{e}"
-
-    await query.edit_message_text(msg, parse_mode="Markdown")
-    await query.message.reply_text("Numero recomendado:", reply_markup=melate_menu_keyboard())
-    return MELATE_ROUTES
-
-# ========================
-#   NGROK — LISTAR URLS ACTIVAS
-# ========================
-
-async def ngrok_active_urls(update, context):
-    query = update.callback_query
-    await query.answer()
-
-    try:
-        urls = ngrok.get_public_urls()
-        if not urls:
-            msg = "❌ No hay túneles activos."
-        else:
-            msg = "🌐 **Ngrok URLs activas:**\n\n" + "\n".join(f"- {u}" for u in urls)
-
-    except Exception as e:
-        msg = f"⚠️ Error obteniendo URLs:\n{e}"
-
-    await query.edit_message_text(msg, parse_mode="Markdown")
-    return NGROK_ROUTES
-
-# ========================
-#   NGROK — STATUS
-# ========================
-
-async def ngrok_status(update, context):
-    query = update.callback_query
-    await query.answer()
-
-    try:
-        status = ngrok.list_tunnels()
-        msg = f"📊 **Ngrok Status:**\n```\n{status}\n```"
-    except Exception as e:
-        msg = f"⚠️ Error obteniendo status:\n{e}"
-
-    await query.edit_message_text(msg, parse_mode="Markdown")
-    return NGROK_ROUTES
-
 
 
 
