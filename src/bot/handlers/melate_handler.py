@@ -11,7 +11,7 @@ async def melate_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     await query.edit_message_text(melate_menu_message(), reply_markup=melate_menu_keyboard())
-    return 2
+    return 3
 
 
 def melate_menu_keyboard():
@@ -37,4 +37,4 @@ async def melate_get_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await query.edit_message_text(msg, parse_mode="Markdown")
     await query.message.reply_text("Numero recomendado:", reply_markup=melate_menu_keyboard())
-    return 2
+    return 3

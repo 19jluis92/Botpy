@@ -39,11 +39,7 @@ from bot.handlers.melate_handler import (
     melate_menu_keyboard,
     melate_menu
 )
-from bot.handlers.docker_handler import (
-    docker_menu,
-    docker_menu_keyboard,
-    docker_menu_message
-)
+from bot.handlers.docker_handler import docker_handlers, docker_menu, DOCKER_ROUTES
 from bot.utils.auth import restricted
 from dotenv import load_dotenv
 import sys, os
@@ -59,7 +55,6 @@ logging.basicConfig(
 )
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
-
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
@@ -165,10 +160,7 @@ if __name__ == "__main__":
                 CallbackQueryHandler(ngrok_status, pattern="^m1_2$"),
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
             ],
-            DOCKER_ROUTES: [
-                #CallbackQueryHandler(roku_define_ip, pattern="^m4_1$"),
-                CallbackQueryHandler(start_over, pattern=f"^{START}$"),
-            ],
+            DOCKER_ROUTES: docker_handlers(),
             MELATE_ROUTES: [
                 CallbackQueryHandler(melate_get_number, pattern="^m3_1$"),
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
