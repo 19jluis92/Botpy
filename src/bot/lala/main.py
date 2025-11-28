@@ -17,8 +17,10 @@ from telegram.ext import (
 from bot.utils.auth import restricted
 from dotenv import load_dotenv
 import sys, os
+from jproperties import Properties
 load_dotenv()
 from bot.system.controlador_roku import RokuController
+from bot.system.controlador_melate import MelateController
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -30,13 +32,16 @@ logger = logging.getLogger(__name__)
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 # Estados
-START_ROUTES, ROKU_ROUTES, END_ROUTES = range(3)
+START_ROUTES,NGROK_ROUTES, MELATE_ROUTES, DOCKER_ROUTES, ROKU_ROUTES, END_ROUTES = range(6)
 
 # callback_data
-START, NGROK, DOCKER, OPTION3, ROKU, END = range(6)
+START, NGROK, DOCKER, MELATE, ROKU, END = range(6)
 
 # Controlador Roku
 roku = RokuController()
+
+# Controlador Melate
+melate = MelateController()
 
 
 #######################################################
@@ -80,6 +85,13 @@ async def docker_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.edit_message_text(docker_menu_message(), reply_markup=docker_menu_keyboard())
     return START_ROUTES
 
+async def melate_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    await query.edit_message_text(melate_menu_message(), reply_markup=melate_menu_keyboard())
+    return MELATE_ROUTES
+
 
 async def roku_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Si viene de botón
@@ -109,7 +121,7 @@ def main_menu_keyboard():
     return InlineKeyboardMarkup([
         [InlineKeyboardButton('Ngrok', callback_data=str(NGROK))],
         [InlineKeyboardButton('Docker', callback_data=str(DOCKER))],
-        [InlineKeyboardButton('Melate', callback_data=str(OPTION3))],
+        [InlineKeyboardButton('Melate', callback_data=str(MELATE))],
         [InlineKeyboardButton('Roku', callback_data=str(ROKU))],
         [InlineKeyboardButton('End conversation', callback_data=str(END))]
     ])
@@ -127,6 +139,12 @@ def docker_menu_keyboard():
     return InlineKeyboardMarkup([
         [InlineKeyboardButton('List containers', callback_data='m2_1')],
         [InlineKeyboardButton('Execute by Id', callback_data='m2_2')],
+        [InlineKeyboardButton('Main menu', callback_data=str(START))]
+    ])
+
+def melate_menu_keyboard():
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton('Dame el numero', callback_data='m3_1')],
         [InlineKeyboardButton('Main menu', callback_data=str(START))]
     ])
 
@@ -156,6 +174,9 @@ def ngrok_menu_message():
 
 def docker_menu_message():
     return "Choose Docker action:"
+
+def melate_menu_message():
+    return "Choose Melate action:"
 
 def roku_menu_message():
     return "Choose Roku action:"
@@ -380,6 +401,24 @@ async def roku_text_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     return ROKU_ROUTES
 
+# ========================
+#   MELATE — DAME UN NUMERO
+# ========================
+
+async def melate_get_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    try:
+        msg = await melate.get_recommended_number()
+    except Exception as e:
+        msg = f"❌ Error al obtener el numero:\n{e}"
+
+    await query.edit_message_text(msg, parse_mode="Markdown")
+    await query.message.reply_text("Numero recomendado:", reply_markup=melate_menu_keyboard())
+    return MELATE_ROUTES
+
+
 #######################################################
 #                     MAIN
 #######################################################
@@ -395,11 +434,23 @@ if __name__ == "__main__":
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
                 CallbackQueryHandler(ngrok_menu, pattern=f"^{NGROK}$"),
                 CallbackQueryHandler(docker_menu, pattern=f"^{DOCKER}$"),
+                CallbackQueryHandler(melate_menu, pattern=f"^{MELATE}$"),
                 CallbackQueryHandler(roku_menu, pattern=f"^{ROKU}$"),
                 CallbackQueryHandler(exit_menu, pattern=f"^{END}$"),
                 CommandHandler("roku", roku_menu),
             ],
-
+            NGROK_ROUTES: [
+                #CallbackQueryHandler(roku_define_ip, pattern="^m4_1$"),
+                CallbackQueryHandler(start_over, pattern=f"^{START}$"),
+            ],
+            DOCKER_ROUTES: [
+                #CallbackQueryHandler(roku_define_ip, pattern="^m4_1$"),
+                CallbackQueryHandler(start_over, pattern=f"^{START}$"),
+            ],
+            MELATE_ROUTES: [
+                CallbackQueryHandler(melate_get_number, pattern="^m3_1$"),
+                CallbackQueryHandler(start_over, pattern=f"^{START}$"),
+            ],
             ROKU_ROUTES: [
                 CallbackQueryHandler(roku_define_ip, pattern="^m4_1$"),
                 CallbackQueryHandler(roku_power_on,  pattern="^m4_2$"),
