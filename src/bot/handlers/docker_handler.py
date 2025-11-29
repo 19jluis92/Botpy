@@ -107,15 +107,3 @@ async def docker_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("🐳 Menú Docker:", reply_markup=docker_menu_keyboard())
     return DOCKER_ROUTES
 
-
-# ================================
-#         AÑADIR AL CONV HANDLER
-# ================================
-
-def docker_handlers():
-    return [
-        CallbackQueryHandler(docker_menu, pattern="^docker_menu$"),
-        CallbackQueryHandler(docker_list, pattern="^docker_list$"),
-        CallbackQueryHandler(docker_info_request, pattern="^docker_info$"),
-        MessageHandler(filters.TEXT & ~filters.COMMAND, docker_info),
-    ]

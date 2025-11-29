@@ -39,7 +39,13 @@ from bot.handlers.melate_handler import (
     melate_menu_keyboard,
     melate_menu
 )
-from bot.handlers.docker_handler import docker_handlers, docker_menu, DOCKER_ROUTES
+from bot.handlers.docker_handler import (
+    docker_info,
+    docker_info_request,
+    docker_list,
+    docker_menu,
+    docker_menu_keyboard,
+)
 from bot.utils.auth import restricted
 from dotenv import load_dotenv
 import sys, os
@@ -146,7 +152,7 @@ if __name__ == "__main__":
         entry_points=[CommandHandler("start", start),
                       CommandHandler("roku", roku_menu),
                       CommandHandler("melate", melate_menu),
-                      CommandHandler("docker", melate_menu),],
+                      CommandHandler("docker", docker_menu),],
         states={
             START_ROUTES: [
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
@@ -166,7 +172,13 @@ if __name__ == "__main__":
                 CallbackQueryHandler(melate_get_number, pattern="^m3_1$"),
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
             ],
-            DOCKER_ROUTES: docker_handlers(),
+            DOCKER_ROUTES: [
+                CallbackQueryHandler(docker_menu, pattern="^docker_menu$"),
+                CallbackQueryHandler(docker_list, pattern="^docker_list$"),
+                CallbackQueryHandler(docker_info_request, pattern="^docker_info$"),
+                CallbackQueryHandler(start_over, pattern=f"^{START}$"),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, docker_info),
+            ],
             ROKU_ROUTES: [
                 CallbackQueryHandler(roku_define_ip, pattern="^m4_1$"),
                 CallbackQueryHandler(roku_power_on,  pattern="^m4_2$"),

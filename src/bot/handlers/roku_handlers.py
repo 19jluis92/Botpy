@@ -2,6 +2,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 from bot.system.controlador_roku import RokuController
+from bot.constants.states import ROKU_ROUTES
 
 roku = RokuController()
 
@@ -26,7 +27,7 @@ async def roku_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=roku_menu_keyboard()
     )
 
-    return 4
+    return ROKU_ROUTES
 
 
 def roku_menu_keyboard():
@@ -53,13 +54,13 @@ async def roku_define_ip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.edit_message_text("📡 Envíame la IP de tu Roku TV:")
     context.user_data["awaiting_ip"] = True
 
-    return 4
+    return ROKU_ROUTES
 
 
 async def set_roku_ip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """El usuario escribe la IP → guardar, conectar y regresar al menú Roku."""
     if not context.user_data.get("awaiting_ip", False):
-        return 4
+        return ROKU_ROUTES
 
     ip = update.message.text.strip()
     roku.set_ip(ip)
@@ -74,7 +75,7 @@ async def set_roku_ip(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"❌ Error al conectar con Roku:\n{e}")
 
     await update.message.reply_text("📺 Menú Roku:", reply_markup=roku_menu_keyboard())
-    return 4
+    return ROKU_ROUTES
 
 
 
@@ -94,7 +95,7 @@ async def roku_power_on(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await query.edit_message_text(msg)
     await query.message.reply_text("📺 Menú Roku:", reply_markup=roku_menu_keyboard())
-    return 4
+    return ROKU_ROUTES
 
 
 
@@ -114,7 +115,7 @@ async def roku_power_off(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await query.edit_message_text(msg)
     await query.message.reply_text("📺 Menú Roku:", reply_markup=roku_menu_keyboard())
-    return 4
+    return ROKU_ROUTES
 
 
 
@@ -134,7 +135,7 @@ async def roku_volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await query.edit_message_text(msg)
     await query.message.reply_text("📺 Menú Roku:", reply_markup=roku_menu_keyboard())
-    return 4
+    return ROKU_ROUTES
 
 
 
@@ -148,12 +149,12 @@ async def roku_open_app(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await query.edit_message_text("📺 Envíame el *ID de la aplicación*:")
     context.user_data["awaiting_appId"] = True
-    return 4
+    return ROKU_ROUTES
 
 
 async def set_roku_app_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.user_data.get("awaiting_appId", False):
-        return 4
+        return ROKU_ROUTES
 
     app_id = update.message.text.strip()
     context.user_data["awaiting_appId"] = False
@@ -166,7 +167,7 @@ async def set_roku_app_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(msg, parse_mode="Markdown")
     await update.message.reply_text("📺 Menú Roku:", reply_markup=roku_menu_keyboard())
-    return 4
+    return ROKU_ROUTES
 
 
 
@@ -190,7 +191,7 @@ async def roku_get_apps(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await query.edit_message_text(msg, parse_mode="Markdown")
     await query.message.reply_text("📺 Menú Roku:", reply_markup=roku_menu_keyboard())
-    return 4
+    return ROKU_ROUTES
 
 
 
@@ -213,7 +214,7 @@ async def roku_get_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await query.edit_message_text(msg, parse_mode="Markdown")
     await query.message.reply_text("📺 Menú Roku:", reply_markup=roku_menu_keyboard())
-    return 4
+    return ROKU_ROUTES
 
 async def roku_text_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
@@ -233,4 +234,4 @@ async def roku_text_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=roku_menu_keyboard()
     )
 
-    return 4
+    return ROKU_ROUTES

@@ -1,6 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 from bot.system.controlador_ngrok import NgrokController
+from bot.constants.states import NGROK_ROUTES
 
 ngrok = NgrokController()
 
@@ -12,7 +13,7 @@ async def ngrok_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     await query.edit_message_text(ngrok_menu_message(), reply_markup=ngrok_menu_keyboard())
-    return 1
+    return NGROK_ROUTES
 
 
 def ngrok_menu_keyboard():
@@ -43,7 +44,7 @@ async def ngrok_active_urls(update, context):
         msg = f"⚠️ Error obteniendo URLs:\n{e}"
 
     await query.edit_message_text(msg, parse_mode="Markdown")
-    return 1
+    return NGROK_ROUTES
 
 # ========================
 #   NGROK — STATUS
@@ -60,7 +61,7 @@ async def ngrok_status(update, context):
         msg = f"⚠️ Error obteniendo status:\n{e}"
 
     await query.edit_message_text(msg, parse_mode="Markdown")
-    return 1
+    return NGROK_ROUTES
 
 
 
