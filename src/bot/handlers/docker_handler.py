@@ -1,13 +1,12 @@
 import logging
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes, ConversationHandler, CallbackQueryHandler, MessageHandler, filters
-
+from bot.constants.states import DOCKER_ROUTES
 from bot.system.controlador_docker import DockerController
 
 logger = logging.getLogger(__name__)
 
-# Estados propios del módulo Docker
-DOCKER_ROUTES = 20
+
 
 # Instancia global del controlador
 docker = DockerController()
@@ -24,7 +23,7 @@ def docker_menu_keyboard():
         [InlineKeyboardButton("Iniciar por ID", callback_data="docker_start")],
         [InlineKeyboardButton("Detener por ID", callback_data="docker_stop")],
         [InlineKeyboardButton("Reiniciar por ID", callback_data="docker_restart")],
-        [InlineKeyboardButton("Volver al menú", callback_data="main_menu")]
+        [InlineKeyboardButton("Volver al menú", callback_data='0')]
     ])
 
 

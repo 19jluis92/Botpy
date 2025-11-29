@@ -59,7 +59,7 @@ logger = logging.getLogger(__name__)
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 # Estados
-START_ROUTES,NGROK_ROUTES, MELATE_ROUTES, DOCKER_ROUTES, ROKU_ROUTES, END_ROUTES = range(6)
+START_ROUTES,NGROK_ROUTES, DOCKER_ROUTES,MELATE_ROUTES, ROKU_ROUTES, END_ROUTES = range(6)
 
 # callback_data
 START, NGROK, DOCKER, MELATE, ROKU, END = range(6)
@@ -144,7 +144,9 @@ if __name__ == "__main__":
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start),
-                      CommandHandler("roku", roku_menu),],
+                      CommandHandler("roku", roku_menu),
+                      CommandHandler("melate", melate_menu),
+                      CommandHandler("docker", melate_menu),],
         states={
             START_ROUTES: [
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
@@ -160,11 +162,11 @@ if __name__ == "__main__":
                 CallbackQueryHandler(ngrok_status, pattern="^m1_2$"),
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
             ],
-            DOCKER_ROUTES: docker_handlers(),
             MELATE_ROUTES: [
                 CallbackQueryHandler(melate_get_number, pattern="^m3_1$"),
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
             ],
+            DOCKER_ROUTES: docker_handlers(),
             ROKU_ROUTES: [
                 CallbackQueryHandler(roku_define_ip, pattern="^m4_1$"),
                 CallbackQueryHandler(roku_power_on,  pattern="^m4_2$"),
@@ -178,7 +180,6 @@ if __name__ == "__main__":
 
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
             ],
-
             END_ROUTES: [
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
                 CallbackQueryHandler(end, pattern=f"^{END}$"),
