@@ -74,10 +74,10 @@ logger = logging.getLogger(__name__)
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 # Estados
-START_ROUTES,NGROK_ROUTES, DOCKER_ROUTES,MELATE_ROUTES, ROKU_ROUTES, SYSTEM_ROUTES, END_ROUTES = range(6)
+START_ROUTES,NGROK_ROUTES, DOCKER_ROUTES,MELATE_ROUTES, ROKU_ROUTES, SYSTEM_ROUTES, END_ROUTES = range(7)
 
 # callback_data
-START, NGROK, DOCKER, MELATE, ROKU, END = range(6)
+START, NGROK, DOCKER, MELATE, ROKU, SYSTEM, END = range(7)
 
 
 #######################################################
