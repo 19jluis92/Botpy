@@ -46,6 +46,15 @@ from bot.handlers.docker_handler import (
     docker_menu,
     docker_menu_keyboard,
 )
+from bot.handlers.system_handlers import (
+    system_menu,
+    system_info,
+    system_usage,
+    system_temp,
+    system_ips,
+    system_reboot,
+    system_shutdown
+)
 from bot.utils.auth import restricted
 from dotenv import load_dotenv
 import sys, os
@@ -65,7 +74,7 @@ logger = logging.getLogger(__name__)
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
 # Estados
-START_ROUTES,NGROK_ROUTES, DOCKER_ROUTES,MELATE_ROUTES, ROKU_ROUTES, END_ROUTES = range(6)
+START_ROUTES,NGROK_ROUTES, DOCKER_ROUTES,MELATE_ROUTES, ROKU_ROUTES, SYSTEM_ROUTES, END_ROUTES = range(6)
 
 # callback_data
 START, NGROK, DOCKER, MELATE, ROKU, END = range(6)
@@ -103,6 +112,7 @@ def main_menu_keyboard():
         [InlineKeyboardButton('Docker', callback_data=str(DOCKER))],
         [InlineKeyboardButton('Melate', callback_data=str(MELATE))],
         [InlineKeyboardButton('Roku', callback_data=str(ROKU))],
+        [InlineKeyboardButton('Sistema', callback_data=str(SYSTEM_ROUTES))],
         [InlineKeyboardButton('End conversation', callback_data=str(END))]
     ])
 
@@ -160,6 +170,7 @@ if __name__ == "__main__":
                 CallbackQueryHandler(docker_menu, pattern=f"^{DOCKER}$"),
                 CallbackQueryHandler(melate_menu, pattern=f"^{MELATE}$"),
                 CallbackQueryHandler(roku_menu, pattern=f"^{ROKU}$"),
+                CallbackQueryHandler(system_menu, pattern=f"^{SYSTEM_ROUTES}$"),
                 CallbackQueryHandler(exit_menu, pattern=f"^{END}$"),
                 CommandHandler("roku", roku_menu),
             ],
@@ -190,6 +201,15 @@ if __name__ == "__main__":
                 # 🔥 IMPORTANTE: Handlers para texto (IP y AppID)
                 MessageHandler(filters.TEXT & ~filters.COMMAND, roku_text_router),
 
+                CallbackQueryHandler(start_over, pattern=f"^{START}$"),
+            ],
+            SYSTEM_ROUTES: [
+                CallbackQueryHandler(system_info, pattern="^sys_info$"),
+                CallbackQueryHandler(system_usage, pattern="^sys_usage$"),
+                CallbackQueryHandler(system_temp, pattern="^sys_temp$"),
+                CallbackQueryHandler(system_ips, pattern="^sys_ips$"),
+                CallbackQueryHandler(system_reboot, pattern="^sys_reboot$"),
+                CallbackQueryHandler(system_shutdown, pattern="^sys_shutdown$"),
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
             ],
             END_ROUTES: [
