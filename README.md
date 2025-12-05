@@ -68,7 +68,7 @@ venv\Scripts\activate    # Windows
 pip install python-telegram-bot==20.7
 pip install python-dotenv
 pip install rokuecp
-pip install sklearn 
+pip install sklearn ---- pip install scikit-learn 
 pip install pandas
 pip install jproperties
 pip install requests
@@ -173,6 +173,13 @@ Estructura importada:
 
 ```python
 from sorteosanalyzed.brainCsv import BrainCSV
+```
+```Instalar dependencia
+ pip install --no-cache-dir git+https://github.com/19jluis92/SorteosAnalyzed
+
+```
+```remover para actualizar dependencia
+ pip uninstall sorteosanalyzed -y
 ```
 
 El bot ejecuta predicciones y análisis directamente desde el controlador.
