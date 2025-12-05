@@ -9,10 +9,22 @@ def ngrok_menu_message():
     return "Choose the Ngrok action:"
 
 async def ngrok_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
+    # Si viene de botón
+    if update.callback_query:
+        query = update.callback_query
+        await query.answer()
+        message = query.message
+    else:
+        # Si viene del comando /ngrok
+        message = update.message
 
-    await query.edit_message_text(ngrok_menu_message(), reply_markup=ngrok_menu_keyboard())
+    context.user_data["ngrok_state"] = None
+
+    await message.reply_text(
+        ngrok_menu_message(),
+        reply_markup=ngrok_menu_keyboard()
+    )
+
     return NGROK_ROUTES
 
 

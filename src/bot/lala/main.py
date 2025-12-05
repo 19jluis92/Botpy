@@ -72,7 +72,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-
+TU_CHAT_ID = os.getenv("CHAT_ID")
 # Estados
 START_ROUTES,NGROK_ROUTES, DOCKER_ROUTES,MELATE_ROUTES, ROKU_ROUTES, SYSTEM_ROUTES, END_ROUTES = range(7)
 
@@ -149,19 +149,26 @@ async def end(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.edit_message_text("See you soon!")
     return ConversationHandler.END
 
-
+#######################################################
+#                     Bot Ready message
+#######################################################
+async def on_startup(app):
+    chat_id = TU_CHAT_ID   # <-- tu ID de Telegram
+    await app.bot.send_message(chat_id, "🤖 LalaBot está en línea y listo para usarse.")
 
 #######################################################
 #                     MAIN
 #######################################################
 
 if __name__ == "__main__":
-    application = ApplicationBuilder().token(TOKEN).build()
+    application = ApplicationBuilder().token(TOKEN).post_init(on_startup).build()
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start),
                       CommandHandler("roku", roku_menu),
                       CommandHandler("melate", melate_menu),
+                      CommandHandler("system", system_menu),
+                      CommandHandler("ngrok", ngrok_menu),
                       CommandHandler("docker", docker_menu),],
         states={
             START_ROUTES: [

@@ -17,11 +17,26 @@ def system_menu_keyboard():
         [InlineKeyboardButton("⬅ Main Menu", callback_data="0")],
     ])
 
+def system_menu_message():
+    return "Choose System action:"
 
 async def system_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    await query.edit_message_text("⚙️ **Menú del Sistema**", reply_markup=system_menu_keyboard(), parse_mode="Markdown")
+        # Si viene de botón
+    if update.callback_query:
+        query = update.callback_query
+        await query.answer()
+        message = query.message
+    else:
+        # Si viene del comando /system
+        message = update.message
+
+    context.user_data["system_state"] = None
+
+    await message.reply_text(
+        system_menu_message(),
+        reply_markup=system_menu_keyboard()
+    )
+
     return SYSTEM_ROUTES
 
 
