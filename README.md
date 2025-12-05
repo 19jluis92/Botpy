@@ -209,6 +209,14 @@ Puedes agregar más módulos siguiendo este formato.
 
 ---
 
+
+# Reiniciar service
+```
+sudo systemctl daemon-reload
+sudo systemctl restart lalabot.service
+sudo systemctl status lalabot.service
+```
+
 ## 📜 Licencia
 
 MIT License.
