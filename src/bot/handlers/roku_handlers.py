@@ -3,6 +3,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 from bot.system.controlador_roku import RokuController
 from bot.constants.states import ROKU_ROUTES
+import json
 
 roku = RokuController()
 
@@ -136,14 +137,14 @@ async def set_roku_volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.user_data.get("awaiting_roku_volume", False):
         return ROKU_ROUTES
 
-    volumen_value = update.message.text.strip()
+    volumen_value =int( update.message.text.strip())
     context.user_data["awaiting_roku_volume"] = False
 
     try:
         if volumen_value >=1:
             await roku.volume_up(volumen_value)  # ajusta según quieras
         else:
-            await roku.volume_up(abs(volumen_value))  # ajusta según quieras
+            await roku.volume_down(abs(volumen_value))  # ajusta según quieras
         msg = "🔊 Volumen ajustado"
     except Exception as e:
         msg = f"❌ Error con el volumen:\n{e}"
