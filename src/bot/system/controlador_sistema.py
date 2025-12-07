@@ -2,6 +2,7 @@ import subprocess
 import platform
 import psutil
 import socket
+import time
 
 class SistemaController:
 

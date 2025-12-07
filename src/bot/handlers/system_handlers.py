@@ -147,4 +147,5 @@ async def system_wireless_restart(update, context):
     await query.answer()
 
     msg = sistema.restart_wifi()
-    await query.edit_me
+    await query.edit_message_text(msg)
+    return SYSTEM_ROUTES
