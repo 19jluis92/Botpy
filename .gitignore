@@ -3,4 +3,5 @@
 src/bot/lala/__pycache__
 src/bot/system/__pycache__
 *.pyc
+*.csv
 /venv

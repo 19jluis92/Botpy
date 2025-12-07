@@ -3,6 +3,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 from bot.system.controlador_roku import RokuController
 from bot.constants.states import ROKU_ROUTES
+import json
 
 roku = RokuController()
 
@@ -127,14 +128,29 @@ async def roku_volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
+    await query.edit_message_text("📺 Envíame el *Volumen*:")
+    context.user_data["awaiting_roku_volume"] = True
+    return ROKU_ROUTES
+
+
+async def set_roku_volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.user_data.get("awaiting_roku_volume", False):
+        return ROKU_ROUTES
+
+    volumen_value =int( update.message.text.strip())
+    context.user_data["awaiting_roku_volume"] = False
+
     try:
-        await roku.volume_up()  # ajusta según quieras
+        if volumen_value >=1:
+            await roku.volume_up(volumen_value)  # ajusta según quieras
+        else:
+            await roku.volume_down(abs(volumen_value))  # ajusta según quieras
         msg = "🔊 Volumen ajustado"
     except Exception as e:
         msg = f"❌ Error con el volumen:\n{e}"
 
-    await query.edit_message_text(msg)
-    await query.message.reply_text("📺 Menú Roku:", reply_markup=roku_menu_keyboard())
+    await update.message.reply_text(msg, parse_mode="Markdown")
+    await update.message.reply_text("📺 Menú Roku:", reply_markup=roku_menu_keyboard())
     return ROKU_ROUTES
 
 
@@ -226,6 +242,10 @@ async def roku_text_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Si estamos esperando un AppID
     if context.user_data.get("awaiting_appId", False):
         return await set_roku_app_id(update, context)
+    
+    # Si estamos esperando un Volumen
+    if context.user_data.get("awaiting_roku_volume", False):
+        return await set_roku_volume(update, context)
 
     # Si llega texto sin esperarlo → ignorar elegantemente
     await update.message.reply_text(
