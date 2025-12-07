@@ -53,7 +53,11 @@ from bot.handlers.system_handlers import (
     system_temp,
     system_ips,
     system_reboot,
-    system_shutdown
+    system_shutdown,
+    system_wireless_restart,
+    system_wlan_restart,
+    system_wireless_sleep,
+    system_wlan_sleep,
 )
 from bot.utils.auth import restricted
 from dotenv import load_dotenv
@@ -208,6 +212,10 @@ if __name__ == "__main__":
                 CallbackQueryHandler(system_usage, pattern="^sys_usage$"),
                 CallbackQueryHandler(system_temp, pattern="^sys_temp$"),
                 CallbackQueryHandler(system_ips, pattern="^sys_ips$"),
+                CallbackQueryHandler(system_wireless_restart, pattern="^sys_wireless_restart$"),
+                CallbackQueryHandler(system_wlan_restart, pattern="^sys_wlan_restart$"),
+                CallbackQueryHandler(system_wireless_sleep, pattern="^sys_wireless_sleep$"),
+                CallbackQueryHandler(system_wlan_sleep, pattern="^sys_wlan_sleep$"),
                 CallbackQueryHandler(system_reboot, pattern="^sys_reboot$"),
                 CallbackQueryHandler(system_shutdown, pattern="^sys_shutdown$"),
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),

@@ -63,3 +63,70 @@ class SistemaController:
     def reboot(self):
         subprocess.Popen(["sudo", "reboot"])
         return "Reiniciando el sistema…"
+    
+    # ====================================================
+    #      REINICIO DE ADAPTADORES DE RED (WLAN / LAN)
+    # ====================================================
+
+    def restart_wifi(self):
+        """
+        Reinicia la interfaz WiFi (wlan0).
+        Compatible con Raspberry Pi / Debian.
+        """
+        try:
+            subprocess.run(["sudo", "ifdown", "wlan0"], check=True)
+            subprocess.run(["sudo", "ifup", "wlan0"], check=True)
+            return "🔄 WiFi reiniciado correctamente (wlan0)."
+        except:
+            # fallback para NetworkManager
+            try:
+                subprocess.run(["sudo", "nmcli", "radio", "wifi", "off"], check=True)
+                subprocess.run(["sudo", "nmcli", "radio", "wifi", "on"], check=True)
+                return "🔄 WiFi reiniciado usando NetworkManager."
+            except Exception as e:
+                return f"❌ Error reiniciando WiFi:\n{e}"
+
+    def restart_ethernet(self):
+        """
+        Reinicia la interfaz Ethernet (eth0).
+        Compatible con Raspberry Pi / Debian.
+        """
+        try:
+            subprocess.run(["sudo", "ifdown", "eth0"], check=True)
+            subprocess.run(["sudo", "ifup", "eth0"], check=True)
+            return "🔄 Ethernet reiniciado correctamente (eth0)."
+        except:
+            # fallback para NetworkManager
+            try:
+                subprocess.run(["sudo", "nmcli", "connection", "down", "eth0"], check=True)
+                subprocess.run(["sudo", "nmcli", "connection", "up", "eth0"], check=True)
+                return "🔄 Ethernet reiniciado usando NetworkManager."
+            except Exception as e:
+                return f"❌ Error reiniciando Ethernet:\n{e}"
+
+    # =============================
+    #   RESET DE ADAPTADORES DE RED
+    # =============================
+    def reset_interface(self, iface: str, seconds: int = 60):
+        """
+        Reinicia una interfaz de red por X segundos.
+        """
+        try:
+            # Apagar interfaz
+            subprocess.run(["sudo", "ip", "link", "set", iface, "down"], check=True)
+
+            # Esperar el tiempo definido
+            time.sleep(seconds)
+
+            # Encender interfaz
+            subprocess.run(["sudo", "ip", "link", "set", iface, "up"], check=True)
+
+            return f"🔌 Interfaz {iface} reiniciada correctamente."
+        except subprocess.CalledProcessError as e:
+            return f"❌ Error al reiniciar la interfaz {iface}: {e}"
+
+    def reset_wifi(self):
+        return self.reset_interface("wlan0", seconds=60)
+
+    def reset_lan(self):
+        return self.reset_interface("eth0", seconds=60)

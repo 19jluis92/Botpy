@@ -12,6 +12,10 @@ def system_menu_keyboard():
         [InlineKeyboardButton("📊 Uso CPU/RAM/Disco", callback_data="sys_usage")],
         [InlineKeyboardButton("🌡 Temperatura", callback_data="sys_temp")],
         [InlineKeyboardButton("📡 IPs", callback_data="sys_ips")],
+        [InlineKeyboardButton("📡 Reiniciar Wireless", callback_data="sys_wireless_restart")],
+        [InlineKeyboardButton("📡 Reiniciar Ethernet", callback_data="sys_wlan_restart")],
+        [InlineKeyboardButton("⛔ Apagar Wireless 60 segundos", callback_data="sys_wireless_sleep")],
+        [InlineKeyboardButton("⛔ Apagar Ethernet 60 segundos", callback_data="sys_wlan_sleep")],
         [InlineKeyboardButton("🔁 Reiniciar", callback_data="sys_reboot")],
         [InlineKeyboardButton("⛔ Apagar", callback_data="sys_shutdown")],
         [InlineKeyboardButton("⬅ Main Menu", callback_data="0")],
@@ -98,3 +102,34 @@ async def system_shutdown(update, context):
     msg = sistema.shutdown()
     await query.edit_message_text(msg)
     return SYSTEM_ROUTES
+
+async def system_wlan_sleep(update, context):
+    query = update.callback_query
+    await query.answer()
+
+    msg = sistema.reset_lan()
+    await query.edit_message_text(msg)
+    return SYSTEM_ROUTES
+
+async def system_wireless_sleep(update, context):
+    query = update.callback_query
+    await query.answer()
+
+    msg = sistema.reset_wifi()
+    await query.edit_message_text(msg)
+    return SYSTEM_ROUTES
+
+async def system_wlan_restart(update, context):
+    query = update.callback_query
+    await query.answer()
+
+    msg = sistema.restart_ethernet()
+    await query.edit_message_text(msg)
+    return SYSTEM_ROUTES
+
+async def system_wireless_restart(update, context):
+    query = update.callback_query
+    await query.answer()
+
+    msg = sistema.restart_wifi()
+    await query.edit_me
