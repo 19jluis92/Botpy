@@ -6,3 +6,4 @@ src/bot/system/__pycache__
 *.csv
 /venv
 src/captures
+tapo_cameras.json
