@@ -74,6 +74,9 @@ pip install jproperties
 pip install requests
 pip install docker
 pip install psutil
+pip install opencv-python
+pip install opencv-python numpy
+
 ```
 
 ---
