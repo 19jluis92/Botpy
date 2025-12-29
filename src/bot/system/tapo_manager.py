@@ -1,6 +1,7 @@
 import asyncio
+import os
 from pathlib import Path
-from time import time
+import time
 from bot.system.controlador_tapo import TapoController
 from bot.system.tapo_motion_detector import MotionDetector
 import json
@@ -52,8 +53,8 @@ class TapoManager:
             for cam in self.detectors:
                 frame, motion = cam["detector"].read()
 
-                if motion and time() > cam["cooldown"]:
-                    cam["cooldown"] = time() + 30  # 30s anti-spam
+                if motion and time.time() > cam["cooldown"]:
+                    cam["cooldown"] = time.time() + 30  # 30s anti-spam
 
                     image = cam["controller"].capture_image()
 
@@ -66,5 +67,20 @@ class TapoManager:
                         chat_id=self.chat_id,
                         photo=open(image, "rb")
                     )
-
+            self.cleanup_folder("captures", 180)  # 3 min
             await asyncio.sleep(1)
+    
+    def cleanup_folder(self,folder, max_age_seconds=300):
+        now = time.time()
+
+        for filename in os.listdir(folder):
+            path = os.path.join(folder, filename)
+
+            if not os.path.isfile(path):
+                continue
+
+            if now - os.path.getmtime(path) > max_age_seconds:
+                try:
+                    os.remove(path)
+                except:
+                    pass

@@ -1,3 +1,4 @@
+import os
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
 from telegram.ext import ContextTypes
 from bot.constants.states import TAPO_ROUTES
@@ -28,6 +29,8 @@ async def tapo_snapshot_entrada(update: Update, context: ContextTypes.DEFAULT_TY
             photo=open(path, "rb"),
             caption=f"📷 Cámara: Entrada"
             )
+        
+        delete_image(path)
     except Exception as e:
         await query.edit_message_text(f"❌ Error al capturar imagen:\n{e}")
 
@@ -43,5 +46,13 @@ async def tapo_snapshot_patio(update: Update, context: ContextTypes.DEFAULT_TYPE
             photo=open(path, "rb"),
             caption=f"📷 Cámara: Patio"
             )
+        
+        delete_image(path)
     except Exception as e:
         await query.edit_message_text(f"❌ Error al capturar imagen:\n{e}")
+
+
+def delete_image(path: str):
+    # borrar después de enviar
+    if os.path.exists(path):
+        os.remove(path)

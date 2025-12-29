@@ -24,3 +24,4 @@ class TapoController:
 
         cv2.imwrite(path, frame)
         return path
+    
