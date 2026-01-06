@@ -3,6 +3,7 @@ import os
 import time
 
 class TapoController:
+
     def __init__(self, name, rtsp_url):
         self.name = name
         self.rtsp_url = rtsp_url
@@ -24,4 +25,14 @@ class TapoController:
 
         cv2.imwrite(path, frame)
         return path
+    
+    def save_frame(self, frame, output_dir="captures"):
+        os.makedirs(output_dir, exist_ok=True)
+
+        filename = f"{self.name}_{int(time.time())}.jpg"
+        path = os.path.join(output_dir, filename)
+
+        cv2.imwrite(path, frame)
+        return path
+
     

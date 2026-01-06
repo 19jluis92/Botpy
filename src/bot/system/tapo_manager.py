@@ -1,10 +1,12 @@
 import asyncio
 import os
-from pathlib import Path
 import time
+import json
+from pathlib import Path
+
 from bot.system.controlador_tapo import TapoController
 from bot.system.tapo_motion_detector import MotionDetector
-import json
+
 
 class TapoManager:
     def __init__(self, bot=None, chat_id=None):
@@ -12,51 +14,66 @@ class TapoManager:
         self.chat_id = chat_id
         self.cameras = {}
         self.detectors = []
-        BASE_DIR = Path(__file__).resolve().parents[2]       # <-- carpeta /src
-        config_path = BASE_DIR /"bot"/ "config" / "tapo_cameras.json"
-        self.load(config_path)
-        
 
+        base_dir = Path(__file__).resolve().parents[2]
+        config_path = base_dir / "bot" / "config" / "tapo_cameras.json"
+
+        self.last_cleanup = 0
+        self.load(config_path)
+
+    # =============================
+    #          LOAD
+    # =============================
     def load(self, path):
         with open(path) as f:
             data = json.load(f)
-        
+
         for cam in data["cameras"]:
-            self.cameras[cam["name"]] = TapoController(
+            controller = TapoController(
                 cam["name"],
                 cam["rtsp"]
             )
-        
-        for cam in data["cameras"]:
+
+            detector = MotionDetector(
+                rtsp_url=cam["rtsp"],
+                min_area=8000,
+                cooldown=30,
+                warmup_time=15
+            )
+
+            self.cameras[cam["name"]] = controller
             self.detectors.append({
                 "name": cam["name"],
-                "controller": TapoController(cam["name"], cam["rtsp"]),
-                "detector": MotionDetector(cam["rtsp"]),
-                "cooldown": 0
+                "controller": controller,
+                "detector": detector
             })
-    
-    def capture_all(self):
-        results = {}
-        for name, cam in self.cameras.items():
-            results[name] = cam.capture_image()
-        return results
 
-    def capture_zone(self, zone_name):
-        
-        for name, cam in self.cameras.items():
-            if zone_name.lower() in name.lower():
-                return cam.capture_image()
-        return None
-
+    # =============================
+    #       MONITOR LOOP
+    # =============================
     async def monitor_loop(self):
         while True:
             for cam in self.detectors:
-                frame, motion = cam["detector"].read()
+                frame, motion, boot = cam["detector"].read()
 
-                if motion and time.time() > cam["cooldown"]:
-                    cam["cooldown"] = time.time() + 30  # 30s anti-spam
+                if frame is None:
+                    continue
 
-                    image = cam["controller"].capture_image()
+                # 📸 Snapshot al iniciar cámara
+                if boot:
+                    image = cam["controller"].save_frame(frame)
+                    await self.bot.send_message(
+                        chat_id=self.chat_id,
+                        text=f"📸 Cámara {cam['name']} iniciada"
+                    )
+                    await self.bot.send_photo(
+                        chat_id=self.chat_id,
+                        photo=open(image, "rb")
+                    )
+
+                # 🚨 Movimiento detectado
+                if motion:
+                    image = cam["controller"].save_frame(frame)
 
                     await self.bot.send_message(
                         chat_id=self.chat_id,
@@ -67,12 +84,23 @@ class TapoManager:
                         chat_id=self.chat_id,
                         photo=open(image, "rb")
                     )
-            self.cleanup_folder("captures", 180)  # 3 min
-            await asyncio.sleep(1)
-    
-    def cleanup_folder(self,folder, max_age_seconds=300):
-        now = time.time()
 
+            # 🧹 Limpieza cada 5 minutos
+            now = time.time()
+            if now - self.last_cleanup > 300:
+                self.cleanup_folder("captures", 300)
+                self.last_cleanup = now
+
+            await asyncio.sleep(1)
+
+    # =============================
+    #        CLEANUP
+    # =============================
+    def cleanup_folder(self, folder, max_age_seconds=300):
+        if not os.path.exists(folder):
+            return
+
+        now = time.time()
         for filename in os.listdir(folder):
             path = os.path.join(folder, filename)
 
@@ -82,5 +110,13 @@ class TapoManager:
             if now - os.path.getmtime(path) > max_age_seconds:
                 try:
                     os.remove(path)
-                except:
+                except Exception:
                     pass
+
+
+    def capture_zone(self, zone_name):
+        
+        for name, cam in self.cameras.items():
+            if zone_name.lower() in name.lower():
+                return cam.capture_image()
+        return None
