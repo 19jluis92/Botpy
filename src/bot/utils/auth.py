@@ -1,4 +1,5 @@
 import json
+import logging
 from pathlib import Path
 from telegram.ext import ContextTypes
 from telegram import Update
@@ -9,17 +10,18 @@ from telegram import Update
 BASE_DIR = Path(__file__).resolve().parents[2]       # <-- carpeta /src
 CONFIG_FILE = BASE_DIR /"bot"/ "config" / "allowed_users.json"
 
+logger = logging.getLogger(__name__)
 
 def load_allowed_users() -> set:
     if not CONFIG_FILE.exists():
-        print(f"[WARNING] No se encontró {CONFIG_FILE}. Se permitirán todos los usuarios.")
+        logger.warning(f"[WARNING] No se encontró {CONFIG_FILE}. Se permitirán todos los usuarios.")
         return set()
 
     try:
         data = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
         return set(data.get("allowed_usernames", []))
     except Exception as e:
-        print(f"[ERROR] No se pudo cargar allowed_users.json: {e}")
+        logging.error(f"[ERROR] No se pudo cargar allowed_users.json: {e}")
         return set()
 
 

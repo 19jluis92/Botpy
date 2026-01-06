@@ -1,16 +1,20 @@
+import logging
 import docker
 
 class DockerController:
     """Controlador para manejar contenedores Docker desde Python."""
 
+    
+    logger = logging.getLogger(__name__)
+    
     def __init__(self):
         try:
             # Cliente automático (funciona con Docker Desktop, WSL y Linux)
             self.client = docker.from_env()
             self.client.ping()
-            print("Docker conectado correctamente.")
+            self.logger.info("Docker conectado correctamente.")
         except Exception as e:
-            print(f"❌ Error al conectar con Docker: {e}")
+            self.logger.error(f"❌ Error al conectar con Docker: {e}")
             self.client = None
 
     def is_ready(self):
