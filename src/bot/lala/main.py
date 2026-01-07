@@ -170,7 +170,8 @@ async def on_startup(app):
     await app.bot.send_message(chat_id, "🤖 LalaBot está en línea y listo para usarse.")
 
 async def post_init(application):
-    application.create_task(tapo_manager.monitor_loop())
+    #application.create_task(tapo_manager.monitor_loop())
+    return 0
 
 #######################################################
 #                     MAIN

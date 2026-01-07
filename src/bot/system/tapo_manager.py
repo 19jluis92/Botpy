@@ -115,8 +115,10 @@ class TapoManager:
 
 
     def capture_zone(self, zone_name):
-        
-        for name, cam in self.cameras.items():
-            if zone_name.lower() in name.lower():
-                return cam.capture_image()
+
+        for cam in self.detectors:
+            if zone_name.lower() in cam["name"].lower():
+                frame = cam["detector"].capture_zone()
+                image = cam["controller"].save_frame(frame)
+                return image
         return None

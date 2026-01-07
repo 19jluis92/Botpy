@@ -131,6 +131,19 @@ class MotionDetector:
             return frame, True, False
 
         return frame, False, False
+    
+
+    def capture_zone(self):
+        if not self.cap or not self.cap.isOpened():
+            self._reconnect()
+            return None
+
+        ret, frame = self.cap.read()
+        if not ret:
+            self._reconnect()
+            return None
+
+        return frame
 
     # =============================
     #          CLEANUP
