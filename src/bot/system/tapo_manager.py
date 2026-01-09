@@ -39,7 +39,7 @@ class TapoManager:
             detector = MotionDetector(
                 name=cam["name"],
                 rtsp_url=cam["rtsp"],
-                min_area=8000,
+                min_area=700,
                 cooldown=30,
                 warmup_time=15
             )
@@ -57,27 +57,24 @@ class TapoManager:
     #       MONITOR LOOP
     # =============================
     async def monitor_loop(self):
-        await asyncio.sleep(10)  # Espera inicial
+        await asyncio.sleep(10)
+
         while True:
+            now = time.time()
+
             for cam in self.detectors:
                 try:
                     frame, motion, boot = cam["detector"].read()
 
-                    now = time.time()
-
-                    if now - cam["last_sent"] < cam["min_interval"]:
-                        self.logger.info(f" {cam['name']} el intervalo no ha pasado, saltando...")
-                        self.logger.debug(f" {cam['name']} el intervalo no ha pasado, saltando...last_sent:{ cam['last_sent']} now:{now}")
-                        continue
-
                     if frame is None:
-                        self.logger.error(f" {cam['name']} el frame es None, saltando...")
+                        self.logger.error(f"{cam['name']} frame None, saltando")
                         continue
-                
-                    # 📸 Snapshot al iniciar cámara
+
+                    # 📸 BOOT SIEMPRE TIENE PRIORIDAD
                     if boot:
-                        self.logger.info(f" {cam['name']} enviando notificación: INICIO")
+                        self.logger.info(f"{cam['name']} enviando BOOT")
                         image = cam["controller"].save_frame(frame)
+
                         await self.bot.send_message(
                             chat_id=self.chat_id,
                             text=f"📸 Cámara {cam['name']} iniciada"
@@ -86,10 +83,17 @@ class TapoManager:
                             chat_id=self.chat_id,
                             photo=open(image, "rb")
                         )
+
                         cam["last_sent"] = now
-                    # 🚨 Movimiento detectado
+                        continue  # ⬅️ MUY IMPORTANTE
+
+                    # ⏱️ Intervalo anti-spam
+                    if now - cam["last_sent"] < cam["min_interval"]:
+                        continue
+
+                    # 🚨 Movimiento
                     if motion:
-                        self.logger.info(f" {cam['name']} enviando notificación: MOVIMIENTO")
+                        self.logger.info(f"🚨 {cam['name']} enviando MOVIMIENTO")
                         image = cam["controller"].save_frame(frame)
 
                         await self.bot.send_message(
@@ -100,15 +104,16 @@ class TapoManager:
                             chat_id=self.chat_id,
                             photo=open(image, "rb")
                         )
+
                         cam["last_sent"] = now
-                
+
                 except Exception as e:
-                    self.logger.error(f"Error en {cam['name']} enviando notificación: {e}")
-            await asyncio.sleep(1)
-            # 🧹 Limpieza cada 5 minutos
-            now = time.time()
+                    self.logger.error(f"Error en {cam['name']}: {e}")
+
+            # 🧹 Limpieza cada 5 min
             if now - self.last_cleanup > 300:
-                self.cleanup_folder("captures"+cam["name"], 300)
+                for cam in self.detectors:
+                    self.cleanup_folder("captures"+cam['name'], 300)
                 self.last_cleanup = now
 
             await asyncio.sleep(1)
@@ -139,6 +144,8 @@ class TapoManager:
         for cam in self.detectors:
             if zone_name.lower() in cam["name"].lower():
                 frame = cam["detector"].capture_zone()
+                if frame is None:
+                    return None
                 image = cam["controller"].save_frame(frame)
                 return image
         return None

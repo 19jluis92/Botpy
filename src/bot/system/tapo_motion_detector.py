@@ -10,7 +10,7 @@ class MotionDetector:
         self,
         name: str,
         rtsp_url: str,
-        min_area: int = 8000,
+        min_area: int = 700,
         cooldown: int = 30,
         reconnect_delay: int = 5,
         warmup_time: int = 15,
@@ -55,13 +55,12 @@ class MotionDetector:
     def _connect(self):
         if self.cap:
             self.cap.release()
-
+            
         self.logger.info(f"🔌 Conectando RTSP: {self.name}")
         self.cap = cv2.VideoCapture(self.rtsp_url)
         time.sleep(self.reconnect_delay)
-
+        self.ignore_until = time.time() + self.warmup_time
         self.start_time = time.time()
-        self.sent_boot_image = False
 
     def _reconnect(self):
         self.logger.warning(f"♻️ Reconectando cámara... {self.name}")
@@ -94,6 +93,9 @@ class MotionDetector:
         now = time.time()
 
         frame = cv2.resize(frame, (640, 360))
+
+        if time.time() < self.ignore_until:
+            return frame, False, False # ❌ NO enviar
 
          # 🧠 WARMUP TOTAL
         if now - self.start_time < self.warmup_time:
@@ -164,7 +166,11 @@ class MotionDetector:
         if not ret:
             self._reconnect()
             return None
-
+        
+        if frame is None:
+            return None
+        
+        frame = cv2.resize(frame, (640, 360))
         return frame
 
     # =============================
