@@ -39,7 +39,7 @@ class TapoManager:
             detector = MotionDetector(
                 name=cam["name"],
                 rtsp_url=cam["rtsp"],
-                min_area=700,
+                min_area=cam["area"],
                 cooldown=30,
                 warmup_time=15
             )

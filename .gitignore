@@ -7,3 +7,4 @@ src/bot/system/__pycache__
 /venv
 src/captures*
 tapo_cameras.json
+captures*
