@@ -9,6 +9,7 @@ class TapoController:
         self.rtsp_url = rtsp_url
 
     def capture_image(self, output_dir="captures"):
+        output_dir = output_dir+self.name
         os.makedirs(output_dir, exist_ok=True)
 
         cap = cv2.VideoCapture(self.rtsp_url)
@@ -27,6 +28,7 @@ class TapoController:
         return path
     
     def save_frame(self, frame, output_dir="captures"):
+        output_dir = output_dir+self.name
         os.makedirs(output_dir, exist_ok=True)
 
         filename = f"{self.name}_{int(time.time())}.jpg"

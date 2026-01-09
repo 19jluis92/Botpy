@@ -3,12 +3,14 @@ import os
 import time
 import json
 from pathlib import Path
-
+import logging
 from bot.system.controlador_tapo import TapoController
 from bot.system.tapo_motion_detector import MotionDetector
 
 
 class TapoManager:
+    logger = logging.getLogger(__name__)
+
     def __init__(self, bot=None, chat_id=None):
         self.bot = bot
         self.chat_id = chat_id
@@ -35,6 +37,7 @@ class TapoManager:
             )
 
             detector = MotionDetector(
+                name=cam["name"],
                 rtsp_url=cam["rtsp"],
                 min_area=8000,
                 cooldown=30,
@@ -45,50 +48,67 @@ class TapoManager:
             self.detectors.append({
                 "name": cam["name"],
                 "controller": controller,
-                "detector": detector
+                "detector": detector,
+                "last_sent": 0,
+                "min_interval": 60
             })
 
     # =============================
     #       MONITOR LOOP
     # =============================
     async def monitor_loop(self):
+        await asyncio.sleep(10)  # Espera inicial
         while True:
             for cam in self.detectors:
-                frame, motion, boot = cam["detector"].read()
+                try:
+                    frame, motion, boot = cam["detector"].read()
 
-                if frame is None:
-                    continue
+                    now = time.time()
 
-                # 📸 Snapshot al iniciar cámara
-                if boot:
-                    image = cam["controller"].save_frame(frame)
-                    await self.bot.send_message(
-                        chat_id=self.chat_id,
-                        text=f"📸 Cámara {cam['name']} iniciada"
-                    )
-                    await self.bot.send_photo(
-                        chat_id=self.chat_id,
-                        photo=open(image, "rb")
-                    )
+                    if now - cam["last_sent"] < cam["min_interval"]:
+                        self.logger.info(f" {cam['name']} el intervalo no ha pasado, saltando...")
+                        self.logger.debug(f" {cam['name']} el intervalo no ha pasado, saltando...last_sent:{ cam['last_sent']} now:{now}")
+                        continue
 
-                # 🚨 Movimiento detectado
-                if motion:
-                    image = cam["controller"].save_frame(frame)
+                    if frame is None:
+                        self.logger.error(f" {cam['name']} el frame es None, saltando...")
+                        continue
+                
+                    # 📸 Snapshot al iniciar cámara
+                    if boot:
+                        self.logger.info(f" {cam['name']} enviando notificación: INICIO")
+                        image = cam["controller"].save_frame(frame)
+                        await self.bot.send_message(
+                            chat_id=self.chat_id,
+                            text=f"📸 Cámara {cam['name']} iniciada"
+                        )
+                        await self.bot.send_photo(
+                            chat_id=self.chat_id,
+                            photo=open(image, "rb")
+                        )
+                        cam["last_sent"] = now
+                    # 🚨 Movimiento detectado
+                    if motion:
+                        self.logger.info(f" {cam['name']} enviando notificación: MOVIMIENTO")
+                        image = cam["controller"].save_frame(frame)
 
-                    await self.bot.send_message(
-                        chat_id=self.chat_id,
-                        text=f"🚨 Movimiento detectado en {cam['name']}"
-                    )
-
-                    await self.bot.send_photo(
-                        chat_id=self.chat_id,
-                        photo=open(image, "rb")
-                    )
-
+                        await self.bot.send_message(
+                            chat_id=self.chat_id,
+                            text=f"🚨 Movimiento detectado en {cam['name']}"
+                        )
+                        await self.bot.send_photo(
+                            chat_id=self.chat_id,
+                            photo=open(image, "rb")
+                        )
+                        cam["last_sent"] = now
+                
+                except Exception as e:
+                    self.logger.error(f"Error en {cam['name']} enviando notificación: {e}")
+            await asyncio.sleep(1)
             # 🧹 Limpieza cada 5 minutos
             now = time.time()
             if now - self.last_cleanup > 300:
-                self.cleanup_folder("captures", 300)
+                self.cleanup_folder("captures"+cam["name"], 300)
                 self.last_cleanup = now
 
             await asyncio.sleep(1)

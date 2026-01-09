@@ -5,5 +5,5 @@ src/bot/system/__pycache__
 *.pyc
 *.csv
 /venv
-src/captures
+src/captures*
 tapo_cameras.json

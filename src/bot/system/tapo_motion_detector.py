@@ -8,6 +8,7 @@ class MotionDetector:
 
     def __init__(
         self,
+        name: str,
         rtsp_url: str,
         min_area: int = 8000,
         cooldown: int = 30,
@@ -23,6 +24,7 @@ class MotionDetector:
         :param warmup_time: tiempo de aprendizaje inicial
         :param roi: (x, y, w, h) región de interés
         """
+        self.name = name
         self.rtsp_url = rtsp_url
         self.min_area = min_area
         self.cooldown = cooldown
@@ -34,6 +36,10 @@ class MotionDetector:
         self.start_time = time.time()
         self.last_motion_time = 0
         self.sent_boot_image = False
+
+        self.fail_count = 0
+        self.max_fails = 5
+
 
         self.subtractor = cv2.createBackgroundSubtractorMOG2(
             history=500,
@@ -50,15 +56,15 @@ class MotionDetector:
         if self.cap:
             self.cap.release()
 
-        self.logger.info(f"🔌 Conectando RTSP: {self.rtsp_url}")
+        self.logger.info(f"🔌 Conectando RTSP: {self.name}")
         self.cap = cv2.VideoCapture(self.rtsp_url)
-        time.sleep(1)
+        time.sleep(self.reconnect_delay)
 
         self.start_time = time.time()
         self.sent_boot_image = False
 
     def _reconnect(self):
-        self.logger.warning("♻️ Reconectando cámara...")
+        self.logger.warning(f"♻️ Reconectando cámara... {self.name}")
         try:
             self.cap.release()
         except Exception:
@@ -73,17 +79,31 @@ class MotionDetector:
     def read(self):
         if not self.cap or not self.cap.isOpened():
             self._reconnect()
-            return None, False, False
+            return None, False, False # ❌ NO enviar
 
         ret, frame = self.cap.read()
         if not ret:
-            self._reconnect()
-            return None, False, False
+            self.fail_count += 1
+            if self.fail_count >= self.max_fails:
+                self._reconnect()
+                self.fail_count = 0
+            return None, False, False # ❌ NO enviar
+        else:
+            self.fail_count = 0
 
+        now = time.time()
+
+        frame = cv2.resize(frame, (640, 360))
+
+         # 🧠 WARMUP TOTAL
+        if now - self.start_time < self.warmup_time:
+            return frame, False, False  # ❌ NO enviar
+    
         # 📸 Snapshot inicial
         if not self.sent_boot_image:
             self.sent_boot_image = True
-            return frame, False, True
+            self.logger.info(f"🚨 Camara en linea {self.name} (BOOT)")
+            return frame, False, True  # ✅ enviar
 
         # ROI
         work_frame = frame
@@ -106,7 +126,7 @@ class MotionDetector:
         fgmask = cv2.dilate(fgmask, kernel, iterations=2)
 
         if elapsed < self.warmup_time:
-            return frame, False, False
+            return frame, False, False # ❌ NO enviar
 
         contours, _ = cv2.findContours(
             fgmask,
@@ -116,6 +136,7 @@ class MotionDetector:
 
         for cnt in contours:
             area = cv2.contourArea(cnt)
+            self.logger.debug(f"🚨 Validando movimiento en {self.name} area:{area}")
             if area < self.min_area:
                 continue
 
@@ -125,12 +146,13 @@ class MotionDetector:
 
             now = time.time()
             if now - self.last_motion_time < self.cooldown:
-                return frame, False, False
+                return frame, False, False # ❌ NO enviar
 
             self.last_motion_time = now
-            return frame, True, False
+            self.logger.info(f"🚨 Movimiento detectado en {self.name}")
+            return frame, True, False  # ✅ enviar
 
-        return frame, False, False
+        return frame, False, False # ❌ NO enviar
     
 
     def capture_zone(self):

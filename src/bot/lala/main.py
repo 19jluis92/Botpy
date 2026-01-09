@@ -170,15 +170,21 @@ async def on_startup(app):
     await app.bot.send_message(chat_id, "🤖 LalaBot está en línea y listo para usarse.")
 
 async def post_init(application):
-    #application.create_task(tapo_manager.monitor_loop())
-    return 0
+    await on_startup(application)
+    application.create_task(tapo_manager.monitor_loop())
+
+#######################################################
+#                    ERROR message
+#######################################################
+async def error_handler(update, context):
+    print("⚠️ Error:", context.error)
 
 #######################################################
 #                     MAIN
 #######################################################
 
 if __name__ == "__main__":
-    application = ApplicationBuilder().token(TOKEN).post_init(on_startup).post_init(post_init).build()
+    application = ApplicationBuilder().token(TOKEN).post_init(post_init).build()
 
     tapo_manager = TapoManager(
             bot=application.bot,
@@ -261,4 +267,5 @@ if __name__ == "__main__":
     )
 
     application.add_handler(conv_handler)
+    application.add_error_handler(error_handler)
     application.run_polling()
