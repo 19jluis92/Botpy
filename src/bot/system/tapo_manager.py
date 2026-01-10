@@ -141,10 +141,9 @@ class TapoManager:
             for cam in self.detectors:
                 try:
                     if not self.notifications_enabled or not cam["enabled"]:
-                        self.logger.info(f"{cam['name']} detección ignorada (notificaciones apagadas)")
-                        await asyncio.sleep(10)
+                        self.logger.debug(f"{cam['name']} detección ignorada (notificaciones apagadas)")
+                        await asyncio.to_thread(cam["detector"].capture_zone)
                         continue
-
 
                     frame, detected, label =  await asyncio.to_thread(
                     cam["detector"].read
@@ -206,3 +205,8 @@ class TapoManager:
                 image = cam["controller"].save_frame(frame)
                 return image
         return None
+    
+    def reset(self):
+
+        for cam in self.detectors:
+            cam["detector"].reset()

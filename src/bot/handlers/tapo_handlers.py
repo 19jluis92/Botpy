@@ -50,6 +50,7 @@ async def tapo_motion_detector_on(update: Update, context: ContextTypes.DEFAULT_
     await query.answer()
     try:
         context.application.bot_data["tapo_manager"].notifications_enabled = True
+        context.application.bot_data["tapo_manager"].reset()
         await query.message.reply_text("🔔 Notificaciones de detección ACTIVADAS")
     except Exception as e:
         await query.edit_message_text(f"❌ Error al encender:\n{e}")

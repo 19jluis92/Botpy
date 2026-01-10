@@ -189,3 +189,7 @@ class ObjectDetector:
     def release(self):
         if self.cap:
             self.cap.release()
+
+    def reset(self):
+        self.tracked_objects.clear()
+        self.start_time = time.time()
