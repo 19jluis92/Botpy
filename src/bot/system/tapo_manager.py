@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import logging
 from bot.system.controlador_tapo import TapoController
-from bot.system.tapo_motion_detector import MotionDetector
+from bot.system.tapo_object_detector import ObjectDetector
 
 
 class TapoManager:
@@ -36,14 +36,25 @@ class TapoManager:
                 cam["rtsp"]
             )
 
-            detector = MotionDetector(
+            # detector = MotionDetector(
+            #     name=cam["name"],
+            #     rtsp_url=cam["rtsp"],
+            #     min_area=cam["area"],
+            #     cooldown=30,
+            #     warmup_time=15
+            # )
+
+            detector = ObjectDetector(
                 name=cam["name"],
                 rtsp_url=cam["rtsp"],
-                min_area=cam["area"],
-                cooldown=30,
-                warmup_time=15
+                detect_classes=["person", "car", "dog"],
+                warmup_time=10,
+                roi=None,  # opcional desde JSON,
+                position_tolerance=90,
+                area_tolerance=0.6,
+                static_lock_time=20
             )
-
+            
             self.cameras[cam["name"]] = controller
             self.detectors.append({
                 "name": cam["name"],
@@ -56,67 +67,99 @@ class TapoManager:
     # =============================
     #       MONITOR LOOP
     # =============================
-    async def monitor_loop(self):
-        await asyncio.sleep(10)
 
+    #Deprecated too sensible pixel by pixel works with tapo_motion_detector.py
+    # async def monitor_loop(self):
+    #     await asyncio.sleep(10)
+
+    #     while True:
+    #         now = time.time()
+
+    #         for cam in self.detectors:
+    #             try:
+    #                 frame, motion, boot = cam["detector"].read()
+
+    #                 if frame is None:
+    #                     self.logger.error(f"{cam['name']} frame None, saltando")
+    #                     continue
+
+    #                 # 📸 BOOT SIEMPRE TIENE PRIORIDAD
+    #                 if boot:
+    #                     self.logger.info(f"{cam['name']} enviando BOOT")
+    #                     image = cam["controller"].save_frame(frame)
+
+    #                     await self.bot.send_message(
+    #                         chat_id=self.chat_id,
+    #                         text=f"📸 Cámara {cam['name']} iniciada"
+    #                     )
+    #                     await self.bot.send_photo(
+    #                         chat_id=self.chat_id,
+    #                         photo=open(image, "rb")
+    #                     )
+
+    #                     cam["last_sent"] = now
+    #                     continue  # ⬅️ MUY IMPORTANTE
+
+    #                 # ⏱️ Intervalo anti-spam
+    #                 if now - cam["last_sent"] < cam["min_interval"]:
+    #                     continue
+
+    #                 # 🚨 Movimiento
+    #                 if motion:
+    #                     self.logger.info(f"🚨 {cam['name']} enviando MOVIMIENTO")
+    #                     image = cam["controller"].save_frame(frame)
+
+    #                     await self.bot.send_message(
+    #                         chat_id=self.chat_id,
+    #                         text=f"🚨 Movimiento detectado en {cam['name']}"
+    #                     )
+    #                     await self.bot.send_photo(
+    #                         chat_id=self.chat_id,
+    #                         photo=open(image, "rb")
+    #                     )
+
+    #                     cam["last_sent"] = now
+
+    #             except Exception as e:
+    #                 self.logger.error(f"Error en {cam['name']}: {e}")
+
+    #         # 🧹 Limpieza cada 5 min
+    #         if now - self.last_cleanup > 300:
+    #             for cam in self.detectors:
+    #                 self.cleanup_folder("captures"+cam['name'], 300)
+    #             self.last_cleanup = now
+
+    #         await asyncio.sleep(1)
+
+    async def monitor_loop(self):
         while True:
             now = time.time()
 
             for cam in self.detectors:
                 try:
-                    frame, motion, boot = cam["detector"].read()
+                    frame, detected, label = cam["detector"].read()
 
                     if frame is None:
-                        self.logger.error(f"{cam['name']} frame None, saltando")
                         continue
 
-                    # 📸 BOOT SIEMPRE TIENE PRIORIDAD
-                    if boot:
-                        self.logger.info(f"{cam['name']} enviando BOOT")
+                    if detected:
                         image = cam["controller"].save_frame(frame)
-
                         await self.bot.send_message(
                             chat_id=self.chat_id,
-                            text=f"📸 Cámara {cam['name']} iniciada"
+                            text=f"🚨 {label.upper()} detectado en {cam['name']}"
                         )
                         await self.bot.send_photo(
                             chat_id=self.chat_id,
                             photo=open(image, "rb")
                         )
-
                         cam["last_sent"] = now
-                        continue  # ⬅️ MUY IMPORTANTE
-
-                    # ⏱️ Intervalo anti-spam
-                    if now - cam["last_sent"] < cam["min_interval"]:
-                        continue
-
-                    # 🚨 Movimiento
-                    if motion:
-                        self.logger.info(f"🚨 {cam['name']} enviando MOVIMIENTO")
-                        image = cam["controller"].save_frame(frame)
-
-                        await self.bot.send_message(
-                            chat_id=self.chat_id,
-                            text=f"🚨 Movimiento detectado en {cam['name']}"
-                        )
-                        await self.bot.send_photo(
-                            chat_id=self.chat_id,
-                            photo=open(image, "rb")
-                        )
-
-                        cam["last_sent"] = now
-
                 except Exception as e:
                     self.logger.error(f"Error en {cam['name']}: {e}")
-
             # 🧹 Limpieza cada 5 min
             if now - self.last_cleanup > 300:
                 for cam in self.detectors:
                     self.cleanup_folder("captures"+cam['name'], 300)
                 self.last_cleanup = now
-
-            await asyncio.sleep(1)
 
     # =============================
     #        CLEANUP

@@ -76,6 +76,7 @@ pip install docker
 pip install psutil
 pip install opencv-python
 pip install opencv-python numpy
+pip install ultralytics opencv-python
 
 ```
 
