@@ -3,6 +3,7 @@ import time
 import logging
 from typing import Optional, Tuple
 
+
 class MotionDetector:
     logger = logging.getLogger(__name__)
 
@@ -10,7 +11,7 @@ class MotionDetector:
         self,
         name: str,
         rtsp_url: str,
-        min_area: int = 12000,
+        min_area: int = 8000,
         cooldown: int = 30,
         reconnect_delay: int = 5,
         warmup_time: int = 15,
@@ -25,25 +26,27 @@ class MotionDetector:
         self.roi = roi
 
         self.cap = None
-        self.start_time = time.time()
         self.last_motion_time = 0
         self.sent_boot_image = False
 
         self.fail_count = 0
         self.max_fails = 5
 
+        # 🧠 Warm-up SOLO UNA VEZ
+        self.warmup_until = time.time() + self.warmup_time
+
         self.subtractor = cv2.createBackgroundSubtractorMOG2(
             history=500,
-            varThreshold=25,
-            detectShadows=True
+            varThreshold=16,
+            detectShadows=False
         )
 
-        self._connect()
+        self._connect(initial=True)
 
     # =============================
     #         RTSP
     # =============================
-    def _connect(self):
+    def _connect(self, initial=False):
         if self.cap:
             self.cap.release()
 
@@ -51,9 +54,7 @@ class MotionDetector:
         self.cap = cv2.VideoCapture(self.rtsp_url)
         time.sleep(self.reconnect_delay)
 
-        self.ignore_until = time.time() + self.warmup_time
-        self.start_time = time.time()
-        self.sent_boot_image = False
+        # ❗️ NO tocar warmup ni boot en reconexión
 
     def _reconnect(self):
         self.logger.warning(f"♻️ Reconectando cámara... {self.name}")
@@ -70,24 +71,30 @@ class MotionDetector:
     def read(self):
         if not self.cap or not self.cap.isOpened():
             self._reconnect()
-            return None, False, False # ❌ NO enviar
+            return None, False, False
 
         ret, frame = self.cap.read()
-        if not ret:
+        if not ret or frame is None:
             self.fail_count += 1
             if self.fail_count >= self.max_fails:
-                self._reconnect()
                 self.fail_count = 0
+                self._reconnect()
             return None, False, False
         else:
             self.fail_count = 0
 
-        now = time.time()
         frame = cv2.resize(frame, (640, 360))
+        now = time.time()
 
-        if now < self.ignore_until:
+        # 🧠 Warm-up REAL
+        if now < self.warmup_until:
+            self.subtractor.apply(
+                cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY),
+                learningRate=-1
+            )
             return frame, False, False
 
+        # 📸 Snapshot SOLO UNA VEZ
         if not self.sent_boot_image:
             self.sent_boot_image = True
             self.logger.info(f"🚨 Camara en linea {self.name} (BOOT)")
@@ -97,25 +104,17 @@ class MotionDetector:
         work_frame = frame
         if self.roi:
             x, y, w, h = self.roi
-            work_frame = frame[y:y+h, x:x+w]
+            work_frame = frame[y:y + h, x:x + w]
 
         gray = cv2.cvtColor(work_frame, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (7, 7), 0)
 
-        fgmask = self.subtractor.apply(gray)
+        fgmask = self.subtractor.apply(gray, learningRate=0)
 
-        # 🔥 eliminar sombras (gris)
-        _, fgmask = cv2.threshold(fgmask, 244, 255, cv2.THRESH_BINARY)
-
+        _, fgmask = cv2.threshold(fgmask, 200, 255, cv2.THRESH_BINARY)
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-        fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, kernel, iterations=2)
-        fgmask = cv2.dilate(fgmask, kernel, iterations=2)
-
-        # ☀️ filtro de cambio global (sol)
-        motion_ratio = cv2.countNonZero(fgmask) / fgmask.size
-        if motion_ratio > 0.25:
-            self.logger.debug(f"{self.name} cambio global detectado (luz)")
-            return frame, False, False
+        fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, kernel, 2)
+        fgmask = cv2.dilate(fgmask, kernel, 2)
 
         contours, _ = cv2.findContours(
             fgmask,
@@ -124,22 +123,11 @@ class MotionDetector:
         )
 
         for cnt in contours:
-            area = cv2.contourArea(cnt)
-            self.logger.debug(f"🚨 Validando movimiento en {self.name} area:{area}")
-            if area < self.min_area:
+            if cv2.contourArea(cnt) < self.min_area:
                 continue
 
             x, y, w, h = cv2.boundingRect(cnt)
             if w < 50 or h < 50:
-                continue
-
-            hull = cv2.convexHull(cnt)
-            hull_area = cv2.contourArea(hull)
-            if hull_area == 0:
-                continue
-
-            solidity = area / hull_area
-            if solidity < 0.4:
                 continue
 
             if now - self.last_motion_time < self.cooldown:
@@ -150,20 +138,3 @@ class MotionDetector:
             return frame, True, False
 
         return frame, False, False
-
-    def capture_zone(self):
-        if not self.cap or not self.cap.isOpened():
-            self._reconnect()
-            return None
-
-        ret, frame = self.cap.read()
-        if not ret:
-            self._reconnect()
-            return None
-
-        frame = cv2.resize(frame, (640, 360))
-        return frame
-
-    def release(self):
-        if self.cap:
-            self.cap.release()
