@@ -28,11 +28,15 @@ async def tapo_snapshot_entrada(update: Update, context: ContextTypes.DEFAULT_TY
     try:
 
         path = context.application.bot_data["tapo_manager"].capture_zone("Entrada")
-
-        await query.message.reply_photo(
-            photo=open(path, "rb"),
-            caption=f"📷 Cámara: Entrada"
-            )
+        if path is None:
+                await query.message.reply_text(
+                "❌ No se pudo conectar con la cámara de la entrada."
+                )
+        else:
+            await query.message.reply_photo(
+                photo=open(path, "rb"),
+                caption=f"📷 Cámara: Entrada"
+                )
         
         delete_image(path)
     except Exception as e:
@@ -43,6 +47,8 @@ async def tapo_motion_detector_off(update: Update, context: ContextTypes.DEFAULT
     await query.answer()
     try:
         context.application.bot_data["tapo_manager"].notifications_enabled = False
+        context.application.bot_data["tapo_manager"].detectors[1]["enabled"] = False
+        context.application.bot_data["tapo_manager"].detectors[0]["enabled"] = False
         await query.message.reply_text("🔕 Notificaciones de detección DESACTIVADAS")
     except Exception as e:
         await query.edit_message_text(f"❌ Error al DESACTIVADAR:\n{e}")
@@ -52,6 +58,8 @@ async def tapo_motion_detector_on(update: Update, context: ContextTypes.DEFAULT_
     await query.answer()
     try:
         context.application.bot_data["tapo_manager"].notifications_enabled = True
+        context.application.bot_data["tapo_manager"].detectors[1]["enabled"] = True
+        context.application.bot_data["tapo_manager"].detectors[0]["enabled"] = True
         context.application.bot_data["tapo_manager"].reset()
         await query.message.reply_text("🔔 Notificaciones de detección ACTIVADAS")
     except Exception as e:
@@ -83,11 +91,15 @@ async def tapo_snapshot_patio(update: Update, context: ContextTypes.DEFAULT_TYPE
     try:
 
         path = context.application.bot_data["tapo_manager"].capture_zone("Patio")
-
-        await query.message.reply_photo(
-            photo=open(path, "rb"),
-            caption=f"📷 Cámara: Patio"
-            )
+        if path is None:
+                await query.message.reply_text(
+                "❌ No se pudo conectar con la cámara del patio."
+                )
+        else:
+            await query.message.reply_photo(
+                photo=open(path, "rb"),
+                caption=f"📷 Cámara: Patio"
+                )
         
         delete_image(path)
     except Exception as e:
