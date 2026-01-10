@@ -132,12 +132,15 @@ class TapoManager:
     #         await asyncio.sleep(1)
 
     async def monitor_loop(self):
+        await asyncio.sleep(5)
         while True:
             now = time.time()
 
             for cam in self.detectors:
                 try:
-                    frame, detected, label = cam["detector"].read()
+                    frame, detected, label =  await asyncio.to_thread(
+                    cam["detector"].read
+                    )
 
                     if frame is None:
                         continue
@@ -155,6 +158,9 @@ class TapoManager:
                         cam["last_sent"] = now
                 except Exception as e:
                     self.logger.error(f"Error en {cam['name']}: {e}")
+            
+            await asyncio.sleep(0.3)
+            
             # 🧹 Limpieza cada 5 min
             if now - self.last_cleanup > 300:
                 for cam in self.detectors:
