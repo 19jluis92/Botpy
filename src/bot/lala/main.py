@@ -70,7 +70,7 @@ from bot.system.controlador_melate import MelateController
 from bot.system.controlador_ngrok import NgrokController
 from bot.system.tapo_manager import TapoManager
 from bot.system.tapo_motion_detector import MotionDetector
-from bot.handlers.tapo_handlers import tapo_menu, tapo_motion_detector_off, tapo_motion_detector_on, tapo_snapshot_entrada, tapo_snapshot_patio
+from bot.handlers.tapo_handlers import tapo_menu, tapo_motion_detector_entrada, tapo_motion_detector_off, tapo_motion_detector_on, tapo_motion_detector_patio, tapo_snapshot_entrada, tapo_snapshot_patio
 from bot.system.controlador_tapo import TapoController
 
 logging.basicConfig(
@@ -258,6 +258,8 @@ if __name__ == "__main__":
                 CallbackQueryHandler(tapo_snapshot_entrada, pattern="^tapo_snapshot_entrada$"),
                 CallbackQueryHandler(tapo_motion_detector_off, pattern="^tapo_motion_detector_off$"),
                 CallbackQueryHandler(tapo_motion_detector_on, pattern="^tapo_motion_detector_on$"),
+                CallbackQueryHandler(tapo_motion_detector_patio, pattern="^tapo_motion_detector_patio$"),
+                CallbackQueryHandler(tapo_motion_detector_entrada, pattern="^tapo_motion_detector_entrada$"),
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
             ],
             END_ROUTES: [

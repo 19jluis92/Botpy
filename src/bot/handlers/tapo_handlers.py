@@ -10,6 +10,8 @@ async def tapo_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("📸 Ver patio", callback_data="tapo_snapshot_patio")],
         [InlineKeyboardButton("📸 Habilitar Detección", callback_data="tapo_motion_detector_on")],
         [InlineKeyboardButton("📸 Desactivar Detección", callback_data="tapo_motion_detector_off")],
+        [InlineKeyboardButton("📸 Habilitar/Desactivar Entrada", callback_data="tapo_motion_detector_entrada")],
+        [InlineKeyboardButton("📸 Habilitar/Desactivar patio", callback_data="tapo_motion_detector_patio")],
         [InlineKeyboardButton('Main menu', callback_data='0')]
     ]
 
@@ -54,6 +56,26 @@ async def tapo_motion_detector_on(update: Update, context: ContextTypes.DEFAULT_
         await query.message.reply_text("🔔 Notificaciones de detección ACTIVADAS")
     except Exception as e:
         await query.edit_message_text(f"❌ Error al encender:\n{e}")
+
+async def tapo_motion_detector_patio(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    try:
+        state = context.application.bot_data["tapo_manager"].detectors[1]["enabled"]
+        context.application.bot_data["tapo_manager"].detectors[1]["enabled"] = not state
+        await query.edit_message_text(f"✅ Detección de Patio {'ACTIVADA' if not state else 'DESACTIVADA'}")
+    except Exception as e:
+        await query.edit_message_text(f"❌ Error al Activar/Desactivar patio:\n{e}")
+
+async def tapo_motion_detector_entrada(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    try:
+        state = context.application.bot_data["tapo_manager"].detectors[0]["enabled"]
+        context.application.bot_data["tapo_manager"].detectors[0]["enabled"] = not state
+        await query.edit_message_text(f"✅ Detección de Entrada {'ACTIVADA' if not state else 'DESACTIVADA'}")
+    except Exception as e:
+        await query.edit_message_text(f"❌ Error al Activar/Desactivar entrada:\n{e}")
 
 async def tapo_snapshot_patio(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
