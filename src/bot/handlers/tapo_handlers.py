@@ -2,12 +2,16 @@ import os
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
 from telegram.ext import ContextTypes
 from bot.constants.states import TAPO_ROUTES
+from bot.system import tapo_manager
 from bot.system.tapo_manager import TapoManager
 
 async def tapo_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("📸 Ver Entrada", callback_data="tapo_snapshot_entrada")],
-        [InlineKeyboardButton("📸 Ver patio", callback_data="tapo_snapshot_patio")]
+        [InlineKeyboardButton("📸 Ver patio", callback_data="tapo_snapshot_patio")],
+        [InlineKeyboardButton("📸 Habilitar Detección", callback_data="tapo_motion_detector_on")],
+        [InlineKeyboardButton("📸 Desactivar Detección", callback_data="tapo_motion_detector_off")],
+        [InlineKeyboardButton('Main menu', callback_data='0')]
     ]
 
     await update.callback_query.answer()
@@ -18,7 +22,6 @@ async def tapo_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return TAPO_ROUTES
 
 async def tapo_snapshot_entrada(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    tapo_manager = TapoManager()
     query = update.callback_query
     await query.answer()
     try:
@@ -34,8 +37,25 @@ async def tapo_snapshot_entrada(update: Update, context: ContextTypes.DEFAULT_TY
     except Exception as e:
         await query.edit_message_text(f"❌ Error al capturar imagen:\n{e}")
 
+async def tapo_motion_detector_off(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    try:
+        tapo_manager.notifications_enabled = False
+        await query.message.reply_text("🔕 Notificaciones de detección DESACTIVADAS")
+    except Exception as e:
+        await query.edit_message_text(f"❌ Error al DESACTIVADAR:\n{e}")
+
+async def tapo_motion_detector_on(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    try:
+        tapo_manager.notifications_enabled = True
+        await query.message.reply_text("🔔 Notificaciones de detección ACTIVADAS")
+    except Exception as e:
+        await query.edit_message_text(f"❌ Error al encender:\n{e}")
+
 async def tapo_snapshot_patio(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    tapo_manager = TapoManager()
     query = update.callback_query
     await query.answer()
     try:

@@ -16,6 +16,7 @@ class TapoManager:
         self.chat_id = chat_id
         self.cameras = {}
         self.detectors = []
+        self.notifications_enabled = True  # 🔔 GLOBAL
 
         base_dir = Path(__file__).resolve().parents[2]
         config_path = base_dir / "bot" / "config" / "tapo_cameras.json"
@@ -47,7 +48,7 @@ class TapoManager:
             detector = ObjectDetector(
                 name=cam["name"],
                 rtsp_url=cam["rtsp"],
-                detect_classes=["person", "car", "dog"],
+                detect_classes=["person", "dog"],#detect_classes=["person", "car", "dog"],
                 warmup_time=10,
                 roi=None,  # opcional desde JSON,
                 position_tolerance=90,
@@ -61,7 +62,8 @@ class TapoManager:
                 "controller": controller,
                 "detector": detector,
                 "last_sent": 0,
-                "min_interval": 60
+                "min_interval": 60,
+                "enabled": True
             })
 
     # =============================
@@ -138,6 +140,12 @@ class TapoManager:
 
             for cam in self.detectors:
                 try:
+                    if not self.notifications_enabled or not cam["enabled"]:
+                        self.logger.info(f"{cam['name']} detección ignorada (notificaciones apagadas)")
+                        await asyncio.sleep(60)
+                        continue
+
+
                     frame, detected, label =  await asyncio.to_thread(
                     cam["detector"].read
                     )
