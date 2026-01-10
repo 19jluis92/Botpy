@@ -142,7 +142,7 @@ class TapoManager:
                 try:
                     if not self.notifications_enabled or not cam["enabled"]:
                         self.logger.info(f"{cam['name']} detección ignorada (notificaciones apagadas)")
-                        await asyncio.sleep(60)
+                        await asyncio.sleep(10)
                         continue
 
 

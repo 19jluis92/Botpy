@@ -190,7 +190,7 @@ if __name__ == "__main__":
             bot=application.bot,
             chat_id=TU_CHAT_ID,
         )
-
+    application.bot_data["tapo_manager"] = tapo_manager
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start),
                       CommandHandler("roku", roku_menu),
