@@ -140,7 +140,7 @@ class TapoManager:
 
             for cam in self.detectors:
                 try:
-                    if not self.notifications_enabled or not cam["enabled"]:
+                    if not self.notifications_enabled and not cam["enabled"]:
                         self.logger.debug(f"{cam['name']} detección ignorada (notificaciones apagadas)")
                         await asyncio.to_thread(cam["detector"].capture_zone)
                         continue
