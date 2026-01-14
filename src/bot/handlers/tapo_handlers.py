@@ -1,10 +1,14 @@
+import logging
 import os
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
 from telegram.ext import ContextTypes
 from bot.constants.states import TAPO_ROUTES
 from bot.system.tapo_object_detector import ObjectDetector
 
+logger = logging.getLogger(__name__)
+
 async def tapo_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.info(f"Accediendo al menú Tapo")
     keyboard = [
         [InlineKeyboardButton("📸 Ver Entrada", callback_data="tapo_snapshot_entrada")],
         [InlineKeyboardButton("📸 Ver patio", callback_data="tapo_snapshot_patio")],
@@ -23,6 +27,7 @@ async def tapo_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return TAPO_ROUTES
 
 async def tapo_snapshot_entrada(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.info(f"tapo_snapshot_entrada called")
     query = update.callback_query
     await query.answer()
     try:
@@ -40,9 +45,11 @@ async def tapo_snapshot_entrada(update: Update, context: ContextTypes.DEFAULT_TY
         
         delete_image(path)
     except Exception as e:
+        logger.error(f"tapo_snapshot_entrada exception:\n{e}")
         await query.edit_message_text(f"❌ Error al capturar imagen:\n{e}")
 
 async def tapo_motion_detector_off(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.info(f"tapo_motion_detector_off called")
     query = update.callback_query
     await query.answer()
     try:
@@ -51,9 +58,11 @@ async def tapo_motion_detector_off(update: Update, context: ContextTypes.DEFAULT
         context.application.bot_data["tapo_manager"].detectors[0]["enabled"] = False
         await query.message.reply_text("🔕 Notificaciones de detección DESACTIVADAS")
     except Exception as e:
+        logger.error(f"tapo_motion_detector_off exception:\n{e}")
         await query.edit_message_text(f"❌ Error al DESACTIVADAR:\n{e}")
 
 async def tapo_motion_detector_on(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.info(f"tapo_motion_detector_on called")
     query = update.callback_query
     await query.answer()
     try:
@@ -63,9 +72,11 @@ async def tapo_motion_detector_on(update: Update, context: ContextTypes.DEFAULT_
         context.application.bot_data["tapo_manager"].reset()
         await query.message.reply_text("🔔 Notificaciones de detección ACTIVADAS")
     except Exception as e:
+        logger.error(f"tapo_motion_detector_on exception:\n{e}")
         await query.edit_message_text(f"❌ Error al encender:\n{e}")
 
 async def tapo_motion_detector_patio(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.info(f"tapo_motion_detector_patio called")
     query = update.callback_query
     await query.answer()
     try:
@@ -73,9 +84,11 @@ async def tapo_motion_detector_patio(update: Update, context: ContextTypes.DEFAU
         context.application.bot_data["tapo_manager"].detectors[1]["enabled"] = not state
         await query.edit_message_text(f"✅ Detección de Patio {'ACTIVADA' if not state else 'DESACTIVADA'}")
     except Exception as e:
+        logger.error(f"tapo_motion_detector_patio exception:\n{e}")
         await query.edit_message_text(f"❌ Error al Activar/Desactivar patio:\n{e}")
 
 async def tapo_motion_detector_entrada(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.info(f"tapo_motion_detector_entrada called")
     query = update.callback_query
     await query.answer()
     try:
@@ -83,9 +96,11 @@ async def tapo_motion_detector_entrada(update: Update, context: ContextTypes.DEF
         context.application.bot_data["tapo_manager"].detectors[0]["enabled"] = not state
         await query.edit_message_text(f"✅ Detección de Entrada {'ACTIVADA' if not state else 'DESACTIVADA'}")
     except Exception as e:
+        logger.error(f"tapo_motion_detector_entrada exception:\n{e}")
         await query.edit_message_text(f"❌ Error al Activar/Desactivar entrada:\n{e}")
 
 async def tapo_snapshot_patio(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logger.info(f"tapo_snapshot_patio called")
     query = update.callback_query
     await query.answer()
     try:
@@ -103,6 +118,7 @@ async def tapo_snapshot_patio(update: Update, context: ContextTypes.DEFAULT_TYPE
         
         delete_image(path)
     except Exception as e:
+        logger.error(f"tapo_snapshot_patio exception:\n{e}")
         await query.edit_message_text(f"❌ Error al capturar imagen:\n{e}")
 
 
