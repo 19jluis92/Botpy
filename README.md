@@ -1,3 +1,10 @@
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![Telegram](https://img.shields.io/badge/Telegram-Bot-blue?logo=telegram)
+![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-orange)
+![OpenCV](https://img.shields.io/badge/OpenCV-Computer%20Vision-green?logo=opencv)
+![License](https://img.shields.io/badge/License-Academic%20%26%20Research%20Only-red)
+![RaspberryPi](https://img.shields.io/badge/Raspberry%20Pi-Compatible-C51A4A?logo=raspberrypi)
+
 # Lala-Bot
 
 Bot de Telegram modular que controla **Roku TV**, **Ngrok**, **Docker**, **Melate**, y ahora incluye un **sistema avanzado de videovigilancia con cámaras TP-Link Tapo**, usando **detección inteligente de personas y animales (YOLOv8)**.
