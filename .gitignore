@@ -8,3 +8,4 @@ src/bot/system/__pycache__
 src/captures*
 tapo_cameras.json
 captures*
+yolov8n.pt
