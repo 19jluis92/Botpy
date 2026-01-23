@@ -5,3 +5,7 @@ src/bot/system/__pycache__
 *.pyc
 *.csv
 /venv
+src/captures*
+tapo_cameras.json
+captures*
+yolov8n.pt
