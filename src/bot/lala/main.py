@@ -59,6 +59,7 @@ from bot.handlers.system_handlers import (
     system_wireless_sleep,
     system_wlan_sleep,
 )
+
 from bot.utils.auth import restricted
 from dotenv import load_dotenv
 import sys, os
@@ -67,6 +68,10 @@ load_dotenv()
 from bot.system.controlador_roku import RokuController
 from bot.system.controlador_melate import MelateController
 from bot.system.controlador_ngrok import NgrokController
+from bot.system.tapo_manager import TapoManager
+from bot.system.tapo_motion_detector import MotionDetector
+from bot.handlers.tapo_handlers import tapo_menu, tapo_motion_detector_entrada, tapo_motion_detector_off, tapo_motion_detector_on, tapo_motion_detector_patio, tapo_snapshot_entrada, tapo_snapshot_patio
+from bot.system.controlador_tapo import TapoController
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -77,11 +82,14 @@ logger = logging.getLogger(__name__)
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TU_CHAT_ID = os.getenv("CHAT_ID")
+
+
+
 # Estados
-START_ROUTES,NGROK_ROUTES, DOCKER_ROUTES,MELATE_ROUTES, ROKU_ROUTES, SYSTEM_ROUTES, END_ROUTES = range(7)
+START_ROUTES,NGROK_ROUTES, DOCKER_ROUTES,MELATE_ROUTES, ROKU_ROUTES, SYSTEM_ROUTES,TAPO_ROUTES, END_ROUTES = range(8)
 
 # callback_data
-START, NGROK, DOCKER, MELATE, ROKU, SYSTEM, END = range(7)
+START, NGROK, DOCKER, MELATE, ROKU, SYSTEM, TAPO, END = range(8)
 
 
 #######################################################
@@ -117,6 +125,7 @@ def main_menu_keyboard():
         [InlineKeyboardButton('Melate', callback_data=str(MELATE))],
         [InlineKeyboardButton('Roku', callback_data=str(ROKU))],
         [InlineKeyboardButton('Sistema', callback_data=str(SYSTEM_ROUTES))],
+        [InlineKeyboardButton('Camaras', callback_data=str(TAPO))],
         [InlineKeyboardButton('End conversation', callback_data=str(END))]
     ])
 
@@ -160,13 +169,28 @@ async def on_startup(app):
     chat_id = TU_CHAT_ID   # <-- tu ID de Telegram
     await app.bot.send_message(chat_id, "🤖 LalaBot está en línea y listo para usarse.")
 
+async def post_init(application):
+    await on_startup(application)
+    application.create_task(tapo_manager.monitor_loop())
+
+#######################################################
+#                    ERROR message
+#######################################################
+async def error_handler(update, context):
+    print("⚠️ Error:", context.error)
+
 #######################################################
 #                     MAIN
 #######################################################
 
 if __name__ == "__main__":
-    application = ApplicationBuilder().token(TOKEN).post_init(on_startup).build()
+    application = ApplicationBuilder().token(TOKEN).post_init(post_init).build()
 
+    tapo_manager = TapoManager(
+            bot=application.bot,
+            chat_id=TU_CHAT_ID,
+        )
+    application.bot_data["tapo_manager"] = tapo_manager
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start),
                       CommandHandler("roku", roku_menu),
@@ -182,6 +206,7 @@ if __name__ == "__main__":
                 CallbackQueryHandler(melate_menu, pattern=f"^{MELATE}$"),
                 CallbackQueryHandler(roku_menu, pattern=f"^{ROKU}$"),
                 CallbackQueryHandler(system_menu, pattern=f"^{SYSTEM_ROUTES}$"),
+                CallbackQueryHandler(tapo_menu, pattern=f"^{TAPO}$"),
                 CallbackQueryHandler(exit_menu, pattern=f"^{END}$"),
                 CommandHandler("roku", roku_menu),
             ],
@@ -227,6 +252,16 @@ if __name__ == "__main__":
                 CallbackQueryHandler(system_shutdown, pattern="^sys_shutdown$"),
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
             ],
+            TAPO_ROUTES: [
+                CallbackQueryHandler(tapo_menu, pattern="^tapo_menu$"),
+                CallbackQueryHandler(tapo_snapshot_patio, pattern="^tapo_snapshot_patio$"),
+                CallbackQueryHandler(tapo_snapshot_entrada, pattern="^tapo_snapshot_entrada$"),
+                CallbackQueryHandler(tapo_motion_detector_off, pattern="^tapo_motion_detector_off$"),
+                CallbackQueryHandler(tapo_motion_detector_on, pattern="^tapo_motion_detector_on$"),
+                CallbackQueryHandler(tapo_motion_detector_patio, pattern="^tapo_motion_detector_patio$"),
+                CallbackQueryHandler(tapo_motion_detector_entrada, pattern="^tapo_motion_detector_entrada$"),
+                CallbackQueryHandler(start_over, pattern=f"^{START}$"),
+            ],
             END_ROUTES: [
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
                 CallbackQueryHandler(end, pattern=f"^{END}$"),
@@ -236,4 +271,5 @@ if __name__ == "__main__":
     )
 
     application.add_handler(conv_handler)
+    application.add_error_handler(error_handler)
     application.run_polling()
