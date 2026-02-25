@@ -29,9 +29,6 @@ class OpenAIManager:
                 proxies=None,
                 trust_env=False)
         )
-        models = await self.client.models.list()
-        logger.info(models)
-        logger.info(f"Available models: {[model.id for model in models.data]}")
     
     async def chat(self, message):
         """Enviar un mensaje al modelo de OpenAI y obtener la respuesta."""
@@ -40,6 +37,7 @@ class OpenAIManager:
         
         response = await self.client.chat.completions.create(
             model=self.config["model"],
-            messages=[{"role": "user", "content": message}]
+            messages=[{"role": "user", "content": message}],
+            extra_body={"keep_alive": -1}
         )
         return response.choices[0].message.content

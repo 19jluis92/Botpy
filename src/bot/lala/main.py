@@ -102,7 +102,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     application.bot_data["state"] = START
     logger.info("User %s started the conversation.", user.first_name)
-    context.user_data["awaiting_chat"] = True
     await update.message.reply_text("I'm Lala-Bot!")
     await update.message.reply_text(main_menu_message(), reply_markup=main_menu_keyboard())
 
@@ -287,7 +286,10 @@ if __name__ == "__main__":
                 MessageHandler(filters.TEXT, openai_text_router),
             ]
         },
-        fallbacks=[CommandHandler("start", start)]
+        fallbacks=[
+                CommandHandler("start", start),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, openai_text_router)
+        ]
     )
 
     application.add_handler(conv_handler)

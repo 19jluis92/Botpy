@@ -63,26 +63,31 @@ def openai_menu_keyboard():
     ])
 
 async def openai_text_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text.strip()
 
-    # Si estamos esperando texto para chat, redirigir a función de chat
-    if context.user_data.get("awaiting_chat", False) and text.find("/") == -1  :
-        return await openai_chat(update, context)
+    global openai_manager
 
-    # Si llega texto sin esperarlo → ignorar elegantemente
-    await update.message.reply_text(
-        "⚠️ No estoy esperando texto ahora.\n"
-        "Usa el menú OpenAI 👉",
-        reply_markup=openai_menu_keyboard()
-    )
+    if update.message.text.startswith("/"):
+        return context.user_data.get("state")
+    
+    if not openai_manager:
+        return context.user_data.get("state")
 
-    return  context.user_data.get("state")
+    try:
+        user_message = update.message.text
+
+        response = await openai_manager.chat(user_message)
+
+        await update.message.reply_text(response)
+
+    except Exception as e:
+        logger.error(f"AI error: {e}")
+        await update.message.reply_text("⚠️ Error con IA")
+
+    # regresar al estado donde estaba el usuario
+    return context.user_data.get("state")
 
 async def openai_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """El usuario escribe al chat con openAI."""
-    if not context.user_data.get("awaiting_chat", False):
-        return context.user_data.get("state")
-
     message = update.message.text.strip()
 
     try:
