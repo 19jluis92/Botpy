@@ -9,6 +9,7 @@ def ngrok_menu_message():
     return "Choose the Ngrok action:"
 
 async def ngrok_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["state"] = NGROK_ROUTES
     # Si viene de botón
     if update.callback_query:
         query = update.callback_query

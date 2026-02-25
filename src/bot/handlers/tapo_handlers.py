@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 async def tapo_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"Accediendo al menú Tapo")
+    context.user_data["state"] = TAPO_ROUTES
     keyboard = [
         [InlineKeyboardButton("📸 Ver Entrada", callback_data="tapo_snapshot_entrada")],
         [InlineKeyboardButton("📸 Ver patio", callback_data="tapo_snapshot_patio")],

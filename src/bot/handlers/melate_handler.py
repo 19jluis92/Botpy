@@ -9,7 +9,7 @@ def melate_menu_message():
     return "Choose Melate action:"
 
 async def melate_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
+    context.user_data["state"] = MELATE_ROUTES
     # Caso cuando viene de comando /melate
     if update.message:
         await update.message.reply_text(

@@ -12,6 +12,7 @@ def roku_menu_message():
 
 
 async def roku_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["state"] = ROKU_ROUTES
     # Si viene de botón
     if update.callback_query:
         query = update.callback_query

@@ -28,7 +28,7 @@ def docker_menu_keyboard():
 
 
 async def docker_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
+    context.user_data["state"] = DOCKER_ROUTES
     query = update.callback_query
     if query:
         await query.answer()

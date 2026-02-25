@@ -25,7 +25,8 @@ def system_menu_message():
     return "Choose System action:"
 
 async def system_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        # Si viene de botón
+    context.user_data["state"] = SYSTEM_ROUTES
+    # Si viene de botón
     if update.callback_query:
         query = update.callback_query
         await query.answer()
