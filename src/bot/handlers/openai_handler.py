@@ -3,7 +3,6 @@ import logging
 import os
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
 from telegram.ext import ContextTypes
-from bot.constants.states import OPENAI_ROUTES
 from bot.system.controlador_openai import OpenAIManager
 
 logger = logging.getLogger(__name__)
@@ -35,47 +34,28 @@ async def openai_start():
     except Exception as e:
         logger.error(f"Error connecting to OpenAI: {e}")
 
-async def openai_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Si viene de botón
-    if update.callback_query:
-        query = update.callback_query
-        await query.answer()
-        message = query.message
-    else:
-        # Si viene del comando /openai
-        message = update.message
-
-    context.user_data["state"] = OPENAI_ROUTES
-
-    await message.reply_text(
-        openai_menu_message(),
-        reply_markup=openai_menu_keyboard()
-    )
-
-    return OPENAI_ROUTES
-
-def openai_menu_message():
-    return "Choose OpenAI action:"
-
-def openai_menu_keyboard():
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton('chat', callback_data='chat')],
-    ])
 
 async def openai_text_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     global openai_manager
+    logger.info("openai_text_router called")
 
     if update.message.text.startswith("/"):
+        logger.info("openai_text_router message ignored starts with /")
         return context.user_data.get("state")
     
     if not openai_manager:
+        logger.info("openai_text_router message ignored because openai_manager is not initialized")
         return context.user_data.get("state")
 
     try:
         user_message = update.message.text
 
+        logger.info("openai_text_router sending user_message: " + user_message)
+
         response = await openai_manager.chat(user_message)
+
+        logger.info("openai_text_router  response: " + response)
 
         await update.message.reply_text(response)
 

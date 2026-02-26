@@ -15,7 +15,7 @@ from telegram.ext import (
     MessageHandler,
     filters
 )
-from bot.handlers.openai_handler import openai_menu, openai_start, openai_text_router
+from bot.handlers.openai_handler import openai_start, openai_text_router
 from bot.handlers.roku_handlers import (
     roku_menu,
     roku_menu_keyboard,
@@ -88,10 +88,10 @@ TU_CHAT_ID = os.getenv("CHAT_ID")
 
 
 # Estados
-START_ROUTES,NGROK_ROUTES, DOCKER_ROUTES,MELATE_ROUTES, ROKU_ROUTES, SYSTEM_ROUTES,TAPO_ROUTES,OPENAI_ROUTES, END_ROUTES = range(9)
+START_ROUTES,NGROK_ROUTES, DOCKER_ROUTES,MELATE_ROUTES, ROKU_ROUTES, SYSTEM_ROUTES,TAPO_ROUTES, END_ROUTES = range(8)
 
 # callback_data
-START, NGROK, DOCKER, MELATE, ROKU, SYSTEM, TAPO, OPENAI, END = range(9)
+START, NGROK, DOCKER, MELATE, ROKU, SYSTEM, TAPO, END = range(8)
 
 
 #######################################################
@@ -128,7 +128,6 @@ def main_menu_keyboard():
         [InlineKeyboardButton('Roku', callback_data=str(ROKU))],
         [InlineKeyboardButton('Sistema', callback_data=str(SYSTEM_ROUTES))],
         [InlineKeyboardButton('Camaras', callback_data=str(TAPO))],
-        [InlineKeyboardButton('OpenAI', callback_data=str(OPENAI))],
         [InlineKeyboardButton('End conversation', callback_data=str(END))]
     ])
 
@@ -203,8 +202,7 @@ if __name__ == "__main__":
                       CommandHandler("system", system_menu),
                       CommandHandler("ngrok", ngrok_menu),
                       CommandHandler("docker", docker_menu),
-                      CommandHandler("tapo", tapo_menu),
-                      CommandHandler("openai", openai_menu)],
+                      CommandHandler("tapo", tapo_menu)],
         states={
             START_ROUTES: [
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
@@ -214,7 +212,6 @@ if __name__ == "__main__":
                 CallbackQueryHandler(roku_menu, pattern=f"^{ROKU}$"),
                 CallbackQueryHandler(system_menu, pattern=f"^{SYSTEM_ROUTES}$"),
                 CallbackQueryHandler(tapo_menu, pattern=f"^{TAPO}$"),
-                CallbackQueryHandler(openai_menu, pattern=f"^{OPENAI}$"),
                 CallbackQueryHandler(exit_menu, pattern=f"^{END}$"),
                 MessageHandler(filters.TEXT, openai_text_router),
             ],
@@ -272,11 +269,6 @@ if __name__ == "__main__":
                 CallbackQueryHandler(tapo_motion_detector_on, pattern="^tapo_motion_detector_on$"),
                 CallbackQueryHandler(tapo_motion_detector_patio, pattern="^tapo_motion_detector_patio$"),
                 CallbackQueryHandler(tapo_motion_detector_entrada, pattern="^tapo_motion_detector_entrada$"),
-                CallbackQueryHandler(start_over, pattern=f"^{START}$"),
-                MessageHandler(filters.TEXT, openai_text_router),
-            ],
-            OPENAI_ROUTES: [
-                CallbackQueryHandler(openai_menu, pattern="^openai_menu$"),
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
                 MessageHandler(filters.TEXT, openai_text_router),
             ],
