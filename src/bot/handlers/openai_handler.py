@@ -38,6 +38,7 @@ async def openai_start():
 async def openai_text_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     global openai_manager
+    user_id = update.effective_user.id
     logger.info("openai_text_router called")
 
     if update.message.text.startswith("/"):
@@ -53,9 +54,9 @@ async def openai_text_router(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
         logger.info("openai_text_router sending user_message: " + user_message)
 
-        response = await openai_manager.chat(user_message)
+        response = await openai_manager.chat(user_id, user_message)
 
-        logger.info("openai_text_router  response: " + response)
+        logger.debug("openai_text_router  response: " + response)
 
         await update.message.reply_text(response)
 

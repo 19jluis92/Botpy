@@ -9,3 +9,4 @@ src/captures*
 tapo_cameras.json
 captures*
 yolov8n.pt
+src/lala_memory.db

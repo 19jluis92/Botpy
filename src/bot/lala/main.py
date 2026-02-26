@@ -63,6 +63,7 @@ from bot.handlers.system_handlers import (
 )
 
 from bot.utils.auth import restricted
+from bot.utils.sqlite_manager import init_db
 from dotenv import load_dotenv
 import sys, os
 from jproperties import Properties
@@ -188,7 +189,8 @@ async def error_handler(update, context):
 
 if __name__ == "__main__":
     application = ApplicationBuilder().token(TOKEN).post_init(post_init).build()
-    
+    #creating database if not exists
+    init_db()
     tapo_manager = TapoManager(
             bot=application.bot,
             chat_id=TU_CHAT_ID,

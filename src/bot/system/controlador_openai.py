@@ -1,10 +1,17 @@
+from email.mime import message
 import logging
 from openai import AsyncOpenAI
 import httpx
+from bot.utils.sqlite_manager import save_message, load_history
 
 class OpenAIManager:
     global logger
     logger = logging.getLogger(__name__)
+    global SYSTEM_PROMPT
+    SYSTEM_PROMPT = {
+    "role": "system",
+    "content": "Tu nombre es Lala, eres una asistente útil y amigable."
+    }
 
     def __init__(self, ip_config, port_config, api_key, model_config):
         self.config = {
@@ -30,14 +37,27 @@ class OpenAIManager:
                 trust_env=False)
         )
     
-    async def chat(self, message):
-        """Enviar un mensaje al modelo de OpenAI y obtener la respuesta."""
+    async def chat(self, user_id, message):
+
         if not hasattr(self, "client"):
             await self.connect()
-        
+
+        history = load_history(user_id, limit=15)
+
+        messages = [SYSTEM_PROMPT] + history + [
+            {"role": "user", "content": message}
+        ]
+
         response = await self.client.chat.completions.create(
             model=self.config["model"],
-            messages=[{"role": "user", "content": message}],
+            messages=messages,
             extra_body={"keep_alive": -1}
         )
-        return response.choices[0].message.content
+
+        answer = response.choices[0].message.content
+
+        # guardar memoria
+        save_message(user_id, "user", message)
+        save_message(user_id, "assistant", answer)
+
+        return answer
