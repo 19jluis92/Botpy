@@ -9,8 +9,13 @@ class OpenAIManager:
     logger = logging.getLogger(__name__)
     global SYSTEM_PROMPT
     SYSTEM_PROMPT = {
-    "role": "system",
-    "content": "Tu nombre es Lala, eres una asistente útil y amigable."
+        "role": "system",
+        "content": (
+            "Tu nombre es Lala. "
+            "Nunca digas otro nombre. "
+            "Si te preguntan quién eres respondes: Soy Lala. "
+            "Respuestas cortas."
+        )
     }
 
     def __init__(self, ip_config, port_config, api_key, model_config):
@@ -42,7 +47,7 @@ class OpenAIManager:
         if not hasattr(self, "client"):
             await self.connect()
 
-        history = load_history(user_id, limit=15)
+        history = load_history(user_id, limit=6)
 
         messages = [SYSTEM_PROMPT] + history + [
             {"role": "user", "content": message}
@@ -51,7 +56,16 @@ class OpenAIManager:
         response = await self.client.chat.completions.create(
             model=self.config["model"],
             messages=messages,
-            extra_body={"keep_alive": -1}
+            max_tokens=120,
+            extra_body={
+                "keep_alive": -1,
+                "options": {
+                    "num_ctx": 1024,
+                    "num_predict": 80,
+                    "temperature": 0.6,
+                    "top_p": 0.9
+                }
+            }
         )
 
         answer = response.choices[0].message.content
