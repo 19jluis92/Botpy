@@ -81,6 +81,7 @@ pip install requests
 pip install docker
 pip install psutil
 pip install ultralytics opencv-python numpy
+pip install openai
 ```
 
 ---
