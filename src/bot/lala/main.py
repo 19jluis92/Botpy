@@ -101,7 +101,7 @@ START, NGROK, DOCKER, MELATE, ROKU, SYSTEM, TAPO, END = range(8)
 @restricted
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
-    application.bot_data["state"] = START
+    context.user_data["state"] = START
     logger.info("User %s started the conversation.", user.first_name)
     await update.message.reply_text("I'm Lala-Bot!")
     await update.message.reply_text(main_menu_message(), reply_markup=main_menu_keyboard())
@@ -110,6 +110,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def start_over(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data["state"] = START
     query = update.callback_query
     await query.answer()
 
@@ -196,7 +197,6 @@ if __name__ == "__main__":
             chat_id=TU_CHAT_ID,
         )
     application.bot_data["tapo_manager"] = tapo_manager
-    application.bot_data["state"] = START
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start),
                       CommandHandler("roku", roku_menu),
@@ -215,18 +215,18 @@ if __name__ == "__main__":
                 CallbackQueryHandler(system_menu, pattern=f"^{SYSTEM_ROUTES}$"),
                 CallbackQueryHandler(tapo_menu, pattern=f"^{TAPO}$"),
                 CallbackQueryHandler(exit_menu, pattern=f"^{END}$"),
-                MessageHandler(filters.TEXT, openai_text_router),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, openai_text_router),
             ],
             NGROK_ROUTES: [
                 CallbackQueryHandler(ngrok_active_urls, pattern="^m1_1$"),
                 CallbackQueryHandler(ngrok_status, pattern="^m1_2$"),
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
-                MessageHandler(filters.TEXT, openai_text_router),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, openai_text_router),
             ],
             MELATE_ROUTES: [
                 CallbackQueryHandler(melate_get_number, pattern="^m3_1$"),
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
-                MessageHandler(filters.TEXT, openai_text_router),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, openai_text_router),
             ],
             DOCKER_ROUTES: [
                 CallbackQueryHandler(docker_menu, pattern="^docker_menu$"),
@@ -234,7 +234,6 @@ if __name__ == "__main__":
                 CallbackQueryHandler(docker_info_request, pattern="^docker_info$"),
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
                 MessageHandler(filters.TEXT & ~filters.COMMAND, docker_info),
-                MessageHandler(filters.TEXT, openai_text_router),
             ],
             ROKU_ROUTES: [
                 CallbackQueryHandler(roku_define_ip, pattern="^m4_1$"),
@@ -261,7 +260,8 @@ if __name__ == "__main__":
                 CallbackQueryHandler(system_reboot, pattern="^sys_reboot$"),
                 CallbackQueryHandler(system_shutdown, pattern="^sys_shutdown$"),
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
-                MessageHandler(filters.TEXT, openai_text_router),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, openai_text_router),
+
             ],
             TAPO_ROUTES: [
                 CallbackQueryHandler(tapo_menu, pattern="^tapo_menu$"),
@@ -272,12 +272,12 @@ if __name__ == "__main__":
                 CallbackQueryHandler(tapo_motion_detector_patio, pattern="^tapo_motion_detector_patio$"),
                 CallbackQueryHandler(tapo_motion_detector_entrada, pattern="^tapo_motion_detector_entrada$"),
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
-                MessageHandler(filters.TEXT, openai_text_router),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, openai_text_router),
             ],
             END_ROUTES: [
                 CallbackQueryHandler(start_over, pattern=f"^{START}$"),
                 CallbackQueryHandler(end, pattern=f"^{END}$"),
-                MessageHandler(filters.TEXT, openai_text_router),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, openai_text_router),
             ]
         },
         fallbacks=[
