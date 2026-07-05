@@ -185,6 +185,71 @@ src/bot/config/tapo_cameras.json
 
 ---
 
+## 🧪 Ejecutar pruebas unitarias
+
+Se incluyen pruebas básicas para validar que los módulos principales no rompan en situaciones comunes y que la lógica crítica siga funcionando.
+
+### Instalar dependencias de pruebas
+
+Se recomienda usar un entorno virtual para evitar conflictos con Python del sistema:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+```
+
+### Ejecutar la suite
+
+```bash
+pytest -q
+```
+
+### Módulos cubiertos y qué valida
+
+- `utils/auth.py`
+  - carga de usuarios permitidos desde el archivo de configuración.
+  - bloqueo de acceso cuando un usuario no está autorizado.
+
+- `utils/sqlite_manager.py`
+  - creación de la base de datos.
+  - guardado y carga de historial de conversaciones.
+  - limpieza de memoria por usuario.
+
+- `handlers/tapo_handlers.py`
+  - eliminación de imágenes temporales tras una captura.
+
+- `system/controlador_sistema.py`
+  - obtención de información del sistema, uso de CPU/RAM/disco y temperatura.
+  - obtención de IP local y pública.
+  - reinicios y apagados de sistema.
+  - reinicio de interfaces de red con fallback a NetworkManager.
+
+- `system/controlador_docker.py`
+  - detección de disponibilidad de Docker.
+  - manejo de errores cuando Docker no está accesible.
+
+- `system/controlador_ngrok.py`
+  - validación de la configuración de la API key.
+  - obtención de URLs públicas de túneles.
+
+- `system/controlador_roku.py`
+  - validación de IP del dispositivo antes de conectar.
+  - configuración básica del controlador.
+
+- `system/controlador_openai.py`
+  - validación de que se requiera una API key para conectar.
+
+- `system/controlador_tapo.py`
+  - guardado de frames capturados como imágenes en disco.
+
+- `system/tapo_manager.py`
+  - limpieza de carpetas de capturas.
+  - reset de detectores.
+  - manejo básico de captura por zona y estado de detección.
+
+---
+
 ## ▶️ Ejecutar el bot
 
 ```bash
